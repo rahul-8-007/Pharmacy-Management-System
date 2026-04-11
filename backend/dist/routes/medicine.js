@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const medicineController_1 = require("../controllers/medicineController");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const router = (0, express_1.Router)();
+router.use(authMiddleware_1.authenticateJWT);
+router.get('/', medicineController_1.getInventory);
+router.get('/batch/:batchNo', medicineController_1.getByBatchNo);
+exports.default = router;
