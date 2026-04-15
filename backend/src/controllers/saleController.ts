@@ -49,3 +49,22 @@ export const sellTablets = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+export const getSalesHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { pharmacistId: req.pharmacistId },
+      include: {
+        medicine: {
+          select: { name: true, batchNo: true, dosage: true }
+        }
+      },
+      orderBy: { soldAt: 'desc' },
+      take: 200 // limits to most recent 200 items for performance
+    });
+    res.json(sales);
+  } catch (error) {
+    console.error('Fetch Sales History Error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
