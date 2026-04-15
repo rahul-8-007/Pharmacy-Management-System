@@ -27,48 +27,100 @@ export default function Login() {
     }
   };
 
+  const inputClass = `
+    w-full pl-12 pr-4 py-3 rounded-xl border text-sm outline-none transition-all
+    focus:ring-2 focus:ring-blue-200
+  `;
+
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Left side Image & Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-primary overflow-hidden">
-        <img src="/bg_login.png" alt="Pharmacy Background" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary via-primary/95 to-transparent"></div>
-        <div className="absolute inset-0 backdrop-blur-[2px]"></div>
-        <div className="relative z-10 p-12 flex flex-col items-center justify-center text-center text-white h-full w-full">
-          <ShieldCheck className="w-24 h-24 mb-6 drop-shadow-xl text-teal-100" strokeWidth={1.5} />
-          <h1 className="text-5xl font-extrabold mb-6 tracking-tight text-white drop-shadow-lg">PharmaSync Elite</h1>
-          <p className="text-xl text-teal-50 max-w-md font-medium leading-relaxed drop-shadow-md">
-            The next-generation pharmacy management platform. Manage your stock, predict demands, and track sales securely.
+    <div className="min-h-screen flex" style={{ background: 'var(--bg-color)' }}>
+      {/* Left: Branding Panel */}
+      <div
+        className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12 overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' }}
+      >
+        {/* Background texture */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, white 2px, transparent 0),
+                              radial-gradient(circle at 75% 75%, white 2px, transparent 0)`,
+            backgroundSize: '60px 60px',
+          }}
+        />
+        <div className="relative z-10 text-center text-white max-w-md">
+          <div
+            className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8"
+            style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+          >
+            <ShieldCheck size={52} strokeWidth={1.5} />
+          </div>
+          <h1 className="text-5xl font-extrabold mb-4 tracking-tight">Clinical Curator</h1>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-6 opacity-75">
+            Pharmacy Management
           </p>
+          <p className="text-lg text-blue-100 leading-relaxed">
+            The next-generation pharmacy platform. Manage stock, predict demands, and track sales — securely.
+          </p>
+          <div className="flex justify-center gap-6 mt-10">
+            {['Stock', 'Sales', 'Predictions'].map(feat => (
+              <div
+                key={feat}
+                className="px-4 py-2 rounded-lg text-sm font-semibold"
+                style={{ background: 'rgba(255,255,255,0.15)' }}
+              >
+                {feat}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Right side Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      {/* Right: Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8" style={{ background: 'var(--white)' }}>
         <div className="w-full max-w-md">
-          <div className="mb-10 text-center lg:text-left">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Welcome Back</h2>
-            <p className="text-gray-500 font-medium text-lg">Sign in to your pharmacist account</p>
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2 mb-8">
+            <ShieldCheck size={28} style={{ color: 'var(--primary)' }} />
+            <span className="text-xl font-bold" style={{ color: 'var(--primary)' }}>Clinical Curator</span>
           </div>
-          
+
+          <div className="mb-10">
+            <h2 className="text-4xl font-extrabold mb-2 tracking-tight" style={{ color: 'var(--text-main)' }}>
+              Welcome Back
+            </h2>
+            <p className="text-base" style={{ color: 'var(--text-muted)' }}>
+              Sign in to your pharmacist account
+            </p>
+          </div>
+
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg mb-6 text-sm flex items-center shadow-sm">
-              <span className="font-semibold">{error}</span>
+            <div
+              className="flex items-center gap-2 p-4 rounded-xl mb-6 text-sm border-l-4"
+              style={{ background: 'var(--red-light)', color: '#991b1b', borderLeftColor: 'var(--red)' }}
+            >
+              {error}
             </div>
           )}
-          
-          <form onSubmit={handleLogin} className="space-y-6">
+
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Email Address</label>
-              <div className="relative group">
+              <label
+                className="block text-xs font-bold uppercase tracking-wide mb-2"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Email Address
+              </label>
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+                  <Mail size={17} style={{ color: 'var(--text-muted)' }} />
                 </div>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white hover:border-gray-300 outline-none transition-all duration-200"
+                  className={inputClass}
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg-color)' }}
                   placeholder="pharmacy@example.com"
                   required
                 />
@@ -76,35 +128,55 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
-              <div className="relative group">
+              <label
+                className="block text-xs font-bold uppercase tracking-wide mb-2"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Password
+              </label>
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+                  <Lock size={17} style={{ color: 'var(--text-muted)' }} />
                 </div>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary focus:bg-white hover:border-gray-300 outline-none transition-all duration-200"
+                  className={inputClass}
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg-color)' }}
                   placeholder="••••••••"
                   required
                 />
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
-              className="w-full bg-primary hover:bg-secondary text-white font-bold text-lg py-4 rounded-xl transition-all duration-300 shadow-xl shadow-teal-500/25 flex items-center justify-center group disabled:opacity-70 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              style={{ background: 'var(--primary)' }}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-              {!isLoading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1.5 transition-transform" />}
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight size={18} />
+                </>
+              )}
             </button>
           </form>
-          
-          <p className="text-center mt-8 text-gray-600">
+
+          <p className="text-center mt-8 text-sm" style={{ color: 'var(--text-muted)' }}>
             Don't have an account?{' '}
-            <Link to="/register" className="text-primary hover:text-secondary font-bold transition-colors">
+            <Link
+              to="/register"
+              className="font-bold transition-colors"
+              style={{ color: 'var(--primary)' }}
+            >
               Create an account
             </Link>
           </p>

@@ -1,13 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-color: #f4f6f8;
+  --sidebar-bg: #f9f9fb;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --primary: #0f4a8e;
+  --primary-hover: #0c3c73;
+  --white: #ffffff;
+  --border: #e2e8f0;
+  --green: #22c55e;
+  --green-light: #dcfce7;
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --blue-light: #e0f2fe;
+  --yellow: #f59e0b;
+  --yellow-light: #fef3c7;
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+  --shadow-md: 0 8px 20px -4px rgb(0 0 0 / 0.12), 0 4px 8px -2px rgb(0 0 0 / 0.06);
+  --border-radius: 12px;
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
     font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
   }
-
   * {
     box-sizing: border-box;
   }
@@ -16,5 +40,73 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+  .badge-live {
+    background-color: var(--green-light);
+    color: var(--green);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .pill-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .pill-optimal {
+    background-color: var(--green-light);
+    color: #16a34a;
+  }
+  .pill-low {
+    background-color: var(--red-light);
+    color: #dc2626;
+  }
+  .pill-expiry {
+    background-color: var(--yellow-light);
+    color: #d97706;
+  }
+  .pill-blue {
+    background-color: var(--blue-light);
+    color: var(--primary);
+  }
+  .icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .action-card {
+    background: var(--white);
+    padding: 24px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+  }
+  .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: #bfdbfe;
+  }
+  .fade-in {
+    animation: fadeIn 0.35s ease both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 }

@@ -17,9 +17,7 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
+  useEffect(() => { fetchInventory(); }, []);
 
   const fetchInventory = async () => {
     try {
@@ -35,106 +33,142 @@ export default function Inventory() {
   const isLowStock = (qty: number) => qty < 20;
   const isNearExpiry = (dateStr: string) => {
     if (!dateStr) return false;
-    const dateObj = new Date(dateStr);
-    if (isNaN(dateObj.getTime())) return false;
-    
-    const days = (dateObj.getTime() - new Date().getTime()) / (1000 * 3600 * 24);
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    const days = (d.getTime() - Date.now()) / (1000 * 3600 * 24);
     return days > 0 && days < 30;
   };
 
   const filteredInventory = inventory.filter(med => {
-    // Hide expired items entirely
     const expiry = new Date(med.expiryDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (expiry < today) {
-      return false; // Remove from inventory view immediately
-    }
+    if (expiry < today) return false;
 
-    const safeName = med.name || '';
-    const safeBatch = med.batchNo || '';
-    const matchesSearch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          safeBatch.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch =
+      (med.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (med.batchNo || '').toLowerCase().includes(searchTerm.toLowerCase());
+
     if (filter === 'low') return matchesSearch && isLowStock(med.quantityAvailable);
     if (filter === 'expiry') return matchesSearch && isNearExpiry(med.expiryDate);
     return matchesSearch;
   });
 
   return (
-    <div>
-      <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Medicines Inventory</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage and track your supplies.</p>
-        </div>
-      </header>
-
-      <div className="bg-white p-4 rounded-t-xl border-b flex space-x-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search by name or batch..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary outline-none"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select 
-          className="border rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-primary"
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-        >
-          <option value="all">All Items</option>
-          <option value="low">Low Stock Alerts</option>
-          <option value="expiry">Near Expiry Alerts</option>
-        </select>
+    <div className="fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-main)' }}>Inventory Control</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Manage and track your active medicine supplies.
+        </p>
       </div>
 
-      <div className="bg-white rounded-b-xl shadow-sm border border-t-0 overflow-hidden">
+      {/* Table Container */}
+      <div
+        className="rounded-xl overflow-hidden border"
+        style={{ background: 'var(--white)', boxShadow: 'var(--shadow-sm)', borderColor: 'var(--border)' }}
+      >
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex-1 relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: 'var(--text-muted)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search by name or batch number..."
+              className="w-full pl-10 pr-4 py-2 rounded-2xl border text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-primary transition-all"
+              style={{ borderColor: 'var(--border)', background: 'var(--bg-color)' }}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select
+            className="px-4 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-primary transition-all font-medium"
+            style={{ borderColor: 'var(--border)', background: 'var(--bg-color)', color: 'var(--text-main)' }}
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          >
+            <option value="all">All Items</option>
+            <option value="low">Low Stock Alerts</option>
+            <option value="expiry">Near Expiry Alerts</option>
+          </select>
+        </div>
+
+        {/* Table */}
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading inventory...</div>
+          <div className="p-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            Loading inventory...
+          </div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
-                <th className="p-4 font-medium">Medicine Name</th>
-                <th className="p-4 font-medium">Dosage</th>
-                <th className="p-4 font-medium">Batch No.</th>
-                <th className="p-4 font-medium text-center">In Stock</th>
-                <th className="p-4 font-medium">Expiry Date</th>
+              <tr style={{ background: 'var(--bg-color)', borderBottom: '1px solid var(--border)' }}>
+                {['Tablet Name', 'Dosage', 'Batch ID', 'Expiry Date', 'Available', 'Status'].map(h => (
+                  <th
+                    key={h}
+                    className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredInventory.map(med => (
-                <tr key={med.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-medium text-gray-800">{med.name}</td>
-                  <td className="p-4 text-gray-600">{med.dosage}</td>
-                  <td className="p-4 text-gray-600">{med.batchNo}</td>
-                  <td className="p-4">
-                    <div className="flex justify-center items-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        isLowStock(med.quantityAvailable) ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                      }`}>
-                        {med.quantityAvailable}
+            <tbody>
+              {filteredInventory.map((med, i) => (
+                <tr
+                  key={med.id}
+                  className="transition-colors"
+                  style={{ borderBottom: i < filteredInventory.length - 1 ? '1px solid var(--border)' : 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td className="px-6 py-4 font-semibold text-sm" style={{ color: 'var(--primary)' }}>
+                    {med.name}
+                  </td>
+                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {med.dosage}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    {med.batchNo}
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={isNearExpiry(med.expiryDate) ? 'font-bold' : ''} style={{ color: isNearExpiry(med.expiryDate) ? '#d97706' : 'var(--text-muted)' }}>
+                      {new Date(med.expiryDate).toLocaleDateString()}
+                    </span>
+                    {isNearExpiry(med.expiryDate) && (
+                      <span title="Expires Soon">
+                        <AlertCircle size={14} className="inline ml-1.5" style={{ color: '#d97706' }} />
                       </span>
-                      {isLowStock(med.quantityAvailable) && <span title="Low Stock"><AlertTriangle className="text-red-500 ml-2" size={16} /></span>}
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold" style={{ color: 'var(--text-main)' }}>
+                    <div className="flex items-center gap-2">
+                      {med.quantityAvailable}
+                      {isLowStock(med.quantityAvailable) && (
+                        <span title="Low Stock">
+                          <AlertTriangle size={14} style={{ color: 'var(--red)' }} />
+                        </span>
+                      )}
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center text-sm">
-                      <span className={`${isNearExpiry(med.expiryDate) ? 'text-orange-600 font-bold' : 'text-gray-600'}`}>
-                        {new Date(med.expiryDate).toLocaleDateString()}
-                      </span>
-                      {isNearExpiry(med.expiryDate) && <span title="Expires Soon"><AlertCircle className="text-orange-500 ml-2" size={16} /></span>}
-                    </div>
+                  <td className="px-6 py-4">
+                    <span className={`pill-status ${isLowStock(med.quantityAvailable) ? 'pill-low' : 'pill-optimal'}`}>
+                      {isLowStock(med.quantityAvailable) ? 'Low Stock' : 'Optimal'}
+                    </span>
                   </td>
                 </tr>
               ))}
               {filteredInventory.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">No matching medicines found.</td>
+                  <td colSpan={6} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                    No matching medicines found in inventory.
+                  </td>
                 </tr>
               )}
             </tbody>

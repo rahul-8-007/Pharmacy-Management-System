@@ -16,9 +16,7 @@ export default function Wastage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchWastage();
-  }, []);
+  useEffect(() => { fetchWastage(); }, []);
 
   const fetchWastage = async () => {
     try {
@@ -34,75 +32,137 @@ export default function Wastage() {
   const filteredWastage = wastageList.filter(item => {
     const safeName = item.name || '';
     const safeBatch = item.batchNo || '';
-    return safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           safeBatch.toLowerCase().includes(searchTerm.toLowerCase());
+    return (
+      safeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      safeBatch.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
-  return (
-    <div>
-      <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Wastage Records</h1>
-          <p className="text-gray-500 text-sm mt-1">Review tablets that were automatically completely discarded due to expiration.</p>
-        </div>
-      </header>
+  const totalWasted = filteredWastage.reduce((acc, item) => acc + item.wastedQuantity, 0);
 
-      <div className="bg-white p-4 rounded-t-xl border-b flex space-x-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search by medicine name or batch..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-1 focus:ring-primary outline-none"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
+  return (
+    <div className="fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-main)' }}>Wastage Records</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          Review tablets automatically discarded due to expiration.
+        </p>
       </div>
 
-      <div className="bg-white rounded-b-xl shadow-sm border border-t-0 overflow-hidden">
+      {/* Summary Banner */}
+      {!loading && wastageList.length > 0 && (
+        <div
+          className="flex items-center gap-4 p-5 rounded-xl mb-6 border-l-4"
+          style={{
+            background: 'linear-gradient(to right, #fff, var(--red-light))',
+            borderLeftColor: 'var(--red)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div
+            className="icon-circle"
+            style={{ background: 'var(--red-light)', color: 'var(--red)' }}
+          >
+            <Trash2 size={20} />
+          </div>
+          <div>
+            <p className="font-bold text-sm" style={{ color: '#991b1b' }}>Total Wastage This Period</p>
+            <p className="text-2xl font-bold mt-0.5" style={{ color: 'var(--red)' }}>
+              {totalWasted.toLocaleString()} <span className="text-base font-medium">units destroyed</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Table Container */}
+      <div
+        className="rounded-xl overflow-hidden border"
+        style={{ background: 'var(--white)', boxShadow: 'var(--shadow-sm)', borderColor: 'var(--border)' }}
+      >
+        {/* Toolbar */}
+        <div className="flex gap-3 px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: 'var(--text-muted)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search by medicine name or batch..."
+              className="w-full pl-10 pr-4 py-2 rounded-2xl border text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-primary transition-all"
+              style={{ borderColor: 'var(--border)', background: 'var(--bg-color)' }}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Table */}
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading wastage records...</div>
+          <div className="p-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            Loading wastage records...
+          </div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider">
-                <th className="p-4 font-medium">Medicine Name</th>
-                <th className="p-4 font-medium">Dosage</th>
-                <th className="p-4 font-medium">Batch No.</th>
-                <th className="p-4 font-medium text-center">Wasted Qty</th>
-                <th className="p-4 font-medium">Expired Date</th>
+              <tr style={{ background: 'var(--bg-color)', borderBottom: '1px solid var(--border)' }}>
+                {['Medicine Name', 'Dosage', 'Batch No.', 'Wasted Qty', 'Expired Date'].map(h => (
+                  <th
+                    key={h}
+                    className="px-6 py-3.5 text-xs font-bold uppercase tracking-wider"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredWastage.map(item => (
-                <tr key={item.id} className="hover:bg-red-50 transition-colors">
-                  <td className="p-4 font-medium text-gray-800 flex items-center">
-                    <Trash2 size={16} className="text-red-400 mr-2" />
-                    {item.name}
-                  </td>
-                  <td className="p-4 text-gray-600">{item.dosage}</td>
-                  <td className="p-4 text-gray-600">{item.batchNo}</td>
-                  <td className="p-4">
-                    <div className="flex justify-center items-center">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        {item.wastedQuantity}
-                      </span>
+            <tbody>
+              {filteredWastage.map((item, i) => (
+                <tr
+                  key={item.id}
+                  className="transition-colors"
+                  style={{ borderBottom: i < filteredWastage.length - 1 ? '1px solid var(--border)' : 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#fff5f5')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td className="px-6 py-4 text-sm font-semibold" style={{ color: 'var(--text-main)' }}>
+                    <div className="flex items-center gap-2">
+                      <Trash2 size={14} style={{ color: 'var(--red)' }} />
+                      {item.name}
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center text-sm">
-                      <span className="text-red-600 font-bold">
+                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {item.dosage}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    {item.batchNo}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="pill-status pill-low">
+                      {item.wastedQuantity} units
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold" style={{ color: 'var(--red)' }}>
                         {new Date(item.expiryDate).toLocaleDateString()}
                       </span>
-                      <span title="Expired"><AlertTriangle className="text-red-500 ml-2" size={16} /></span>
+                      <AlertTriangle size={14} style={{ color: 'var(--red)' }} />
                     </div>
                   </td>
                 </tr>
               ))}
               {filteredWastage.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">No wastage records found!</td>
+                  <td colSpan={5} className="px-6 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {wastageList.length === 0
+                      ? '🎉 No wastage records! All batches are within expiry.'
+                      : 'No matching wastage records found.'}
+                  </td>
                 </tr>
               )}
             </tbody>
