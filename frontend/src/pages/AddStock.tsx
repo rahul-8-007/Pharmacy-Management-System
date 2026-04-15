@@ -60,8 +60,16 @@ export default function AddStock() {
     setMessage('');
     
     // Validate date format correctly on frontend first
-    if (isNaN(new Date(formData.expiryDate).getTime())) {
+    const selectedDate = new Date(formData.expiryDate);
+    if (isNaN(selectedDate.getTime())) {
       setMessage('Invalid expiry date format. Please correct it.');
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      setMessage('Cannot add medicines that are already expired.');
       return;
     }
 

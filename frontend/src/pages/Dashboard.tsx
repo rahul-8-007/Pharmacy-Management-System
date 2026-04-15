@@ -30,7 +30,9 @@ export default function Dashboard() {
           }
           
           const daysToExpiry = (new Date(med.expiryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24);
-          if (daysToExpiry > 0 && daysToExpiry < 30) {
+          if (daysToExpiry <= 0) {
+            newAlerts.push(`Expired Alert: ${med.name} (Batch: ${med.batchNo}) has expired and was officially removed from active inventory.`);
+          } else if (daysToExpiry > 0 && daysToExpiry < 30) {
             newAlerts.push(`Expiry Alert: ${med.name} (Batch: ${med.batchNo}) expires in ${Math.ceil(daysToExpiry)} days.`);
           }
         });

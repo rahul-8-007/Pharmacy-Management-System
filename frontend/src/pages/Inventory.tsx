@@ -43,6 +43,14 @@ export default function Inventory() {
   };
 
   const filteredInventory = inventory.filter(med => {
+    // Hide expired items entirely
+    const expiry = new Date(med.expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (expiry < today) {
+      return false; // Remove from inventory view immediately
+    }
+
     const safeName = med.name || '';
     const safeBatch = med.batchNo || '';
     const matchesSearch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 

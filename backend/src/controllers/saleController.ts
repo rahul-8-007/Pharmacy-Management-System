@@ -16,6 +16,12 @@ export const sellTablets = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Medicine not found' });
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (new Date(medicine.expiryDate) < today) {
+      return res.status(400).json({ error: 'Cannot sell expired medicines' });
+    }
+
     if (medicine.quantityAvailable < qty) {
       return res.status(400).json({ error: 'Insufficient stock available' });
     }

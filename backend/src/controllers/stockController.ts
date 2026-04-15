@@ -22,6 +22,12 @@ export const addStock = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid expiry date format' });
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of today
+    if (parsedDate < today) {
+      return res.status(400).json({ error: 'Cannot add medicines that are already expired.' });
+    }
+
     const addedQty = Number(quantityAdded);
     if (isNaN(addedQty) || addedQty <= 0) {
       return res.status(400).json({ error: 'Quantity must be a valid positive number' });

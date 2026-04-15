@@ -4,6 +4,20 @@ import prisma from '../prismaClient';
 
 export const getInventory = async (req: AuthRequest, res: Response) => {
   try {
+    const now = new Date();
+    
+    // Auto-clean expired stock by zeroing out their quantities first
+    await prisma.medicine.updateMany({
+      where: {
+        pharmacistId: req.pharmacistId,
+        expiryDate: { lt: now },
+        quantityAvailable: { gt: 0 }
+      },
+      data: {
+        quantityAvailable: 0
+      }
+    });
+
     const medicines = await prisma.medicine.findMany({
       where: { pharmacistId: req.pharmacistId },
       orderBy: { createdAt: 'desc' }
