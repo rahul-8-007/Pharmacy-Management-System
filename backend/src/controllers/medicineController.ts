@@ -10,6 +10,7 @@ export const getInventory = async (req: AuthRequest, res: Response) => {
     });
     res.json(medicines);
   } catch (error) {
+    console.error('Get Inventory Error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -47,6 +48,7 @@ export const getByBatchNo = async (req: AuthRequest, res: Response) => {
 
     res.json({ foundInDb: false, medicine: null });
   } catch (error) {
+    console.error('Get Batch Error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

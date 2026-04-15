@@ -57,6 +57,14 @@ export default function AddStock() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
+    
+    // Validate date format correctly on frontend first
+    if (isNaN(new Date(formData.expiryDate).getTime())) {
+      setMessage('Invalid expiry date format. Please correct it.');
+      return;
+    }
+
     setSaveLoading(true);
     try {
       await api.post('/stock/add', formData);
@@ -65,7 +73,8 @@ export default function AddStock() {
         batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: ''
       });
     } catch (err: any) {
-      setMessage(err.response?.data?.error || 'Failed to add stock');
+      console.error('Submit error:', err);
+      setMessage(err.response?.data?.error || 'Failed to add stock. Please check your inputs.');
     } finally {
       setSaveLoading(false);
     }

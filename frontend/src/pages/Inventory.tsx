@@ -34,13 +34,19 @@ export default function Inventory() {
 
   const isLowStock = (qty: number) => qty < 20;
   const isNearExpiry = (dateStr: string) => {
-    const days = (new Date(dateStr).getTime() - new Date().getTime()) / (1000 * 3600 * 24);
+    if (!dateStr) return false;
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) return false;
+    
+    const days = (dateObj.getTime() - new Date().getTime()) / (1000 * 3600 * 24);
     return days > 0 && days < 30;
   };
 
   const filteredInventory = inventory.filter(med => {
-    const matchesSearch = med.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          med.batchNo.toLowerCase().includes(searchTerm.toLowerCase());
+    const safeName = med.name || '';
+    const safeBatch = med.batchNo || '';
+    const matchesSearch = safeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          safeBatch.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filter === 'low') return matchesSearch && isLowStock(med.quantityAvailable);
     if (filter === 'expiry') return matchesSearch && isNearExpiry(med.expiryDate);
@@ -105,7 +111,7 @@ export default function Inventory() {
                       }`}>
                         {med.quantityAvailable}
                       </span>
-                      {isLowStock(med.quantityAvailable) && <AlertTriangle className="text-red-500 ml-2" size={16} title="Low Stock" />}
+                      {isLowStock(med.quantityAvailable) && <span title="Low Stock"><AlertTriangle className="text-red-500 ml-2" size={16} /></span>}
                     </div>
                   </td>
                   <td className="p-4">
@@ -113,7 +119,7 @@ export default function Inventory() {
                       <span className={`${isNearExpiry(med.expiryDate) ? 'text-orange-600 font-bold' : 'text-gray-600'}`}>
                         {new Date(med.expiryDate).toLocaleDateString()}
                       </span>
-                      {isNearExpiry(med.expiryDate) && <AlertCircle className="text-orange-500 ml-2" size={16} title="Expires Soon" />}
+                      {isNearExpiry(med.expiryDate) && <span title="Expires Soon"><AlertCircle className="text-orange-500 ml-2" size={16} /></span>}
                     </div>
                   </td>
                 </tr>
