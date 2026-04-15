@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { PackagePlus, HandCoins, ClipboardList, LineChart, AlertTriangle, History } from 'lucide-react';
+import { PackagePlus, HandCoins, ClipboardList, LineChart, AlertTriangle, History, Trash2 } from 'lucide-react';
 import api from '../lib/api';
 
 interface Medicine {
@@ -50,6 +50,7 @@ export default function Dashboard() {
     { name: 'Add New Stock', path: '/add-stock', icon: <PackagePlus size={40} className="text-blue-500" />, desc: 'Receive and log new medicine batches' },
     { name: 'Sell Tablets', path: '/sell', icon: <HandCoins size={40} className="text-green-500" />, desc: 'Process sales and automatically deduct stock' },
     { name: 'Sales History', path: '/sales-history', icon: <History size={40} className="text-teal-500" />, desc: 'Review historical operations and transaction logs' },
+    { name: 'View Wastage', path: '/wastage', icon: <Trash2 size={40} className="text-red-500" />, desc: 'Inspect completely discarded inventory batches' },
     { name: 'View Inventory', path: '/inventory', icon: <ClipboardList size={40} className="text-purple-500" />, desc: 'Search and filter active medicine stock' },
     { name: 'View Predictions', path: '/predictions', icon: <LineChart size={40} className="text-orange-500" />, desc: 'Analyze sales trends and reorder estimates' },
   ];

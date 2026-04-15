@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { PackagePlus, HandCoins, ClipboardList, LineChart, LogOut, LayoutDashboard, History } from 'lucide-react';
+import { PackagePlus, HandCoins, ClipboardList, LineChart, LogOut, LayoutDashboard, History, Trash2 } from 'lucide-react';
 
 export default function Layout() {
   const { user, logout } = useContext(AuthContext);
@@ -19,6 +19,7 @@ export default function Layout() {
     { name: 'Sell Tablets', path: '/sell', icon: <HandCoins size={20} /> },
     { name: 'Inventory', path: '/inventory', icon: <ClipboardList size={20} /> },
     { name: 'Sales History', path: '/sales-history', icon: <History size={20} /> },
+    { name: 'Wastage', path: '/wastage', icon: <Trash2 size={20} /> },
     { name: 'Predictions', path: '/predictions', icon: <LineChart size={20} /> },
   ];
 

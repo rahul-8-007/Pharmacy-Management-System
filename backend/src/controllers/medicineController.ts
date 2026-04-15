@@ -66,3 +66,42 @@ export const getByBatchNo = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+export const getWastage = async (req: AuthRequest, res: Response) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expiredMedicines = await prisma.medicine.findMany({
+      where: {
+        pharmacistId: req.pharmacistId,
+        expiryDate: { lt: today }
+      },
+      include: {
+        stockEntries: true,
+        sales: true
+      },
+      orderBy: { expiryDate: 'desc' }
+    });
+
+    const wastageData = expiredMedicines.map(med => {
+      const totalAdded = med.stockEntries.reduce((sum, entry) => sum + entry.quantityAdded, 0);
+      const totalSold = med.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
+      const wastedQuantity = totalAdded - totalSold;
+
+      return {
+        id: med.id,
+        name: med.name,
+        batchNo: med.batchNo,
+        dosage: med.dosage,
+        expiryDate: med.expiryDate,
+        wastedQuantity
+      };
+    }).filter(med => med.wastedQuantity > 0);
+
+    res.json(wastageData);
+  } catch (error) {
+    console.error('Get Wastage Error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

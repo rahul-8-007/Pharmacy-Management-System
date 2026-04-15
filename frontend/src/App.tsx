@@ -12,6 +12,7 @@ import SellTablets from './pages/SellTablets';
 import Inventory from './pages/Inventory';
 import Predictions from './pages/Predictions';
 import SalesHistory from './pages/SalesHistory';
+import Wastage from './pages/Wastage';
 import Layout from './components/Layout';
 
 function PublicRoute({ children }: { children: JSX.Element }) {
@@ -33,6 +34,7 @@ function AppRoutes() {
         <Route path="/sell" element={<SellTablets />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/sales-history" element={<SalesHistory />} />
+        <Route path="/wastage" element={<Wastage />} />
         <Route path="/predictions" element={<Predictions />} />
       </Route>
     </Routes>
