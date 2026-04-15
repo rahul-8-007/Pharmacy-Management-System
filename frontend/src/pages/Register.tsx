@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import api from '../lib/api';
 import { User, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
@@ -11,15 +12,16 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     try {
       await api.post('/auth/register', { name, email, password });
       navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      setError(msg || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

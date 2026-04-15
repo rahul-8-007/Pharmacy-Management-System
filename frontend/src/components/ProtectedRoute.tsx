@@ -1,8 +1,9 @@
 import { Navigate } from 'react-router-dom';
 import { useContext } from 'react';
+import type { ReactElement } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
-export const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+export const ProtectedRoute = ({ children }: { children: ReactElement }) => {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {

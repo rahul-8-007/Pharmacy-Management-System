@@ -2,8 +2,28 @@ import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/api';
 
+interface PredictionItem {
+  medicineId: string;
+  name: string;
+  dosage: string;
+  soldLast30Days: number;
+  currentStock: number;
+  nextMonthEstimate: number;
+  status: string;
+}
+
+interface TrendItem {
+  date: string;
+  sales: number;
+}
+
+interface PredictionsData {
+  predictions: PredictionItem[];
+  trends: TrendItem[];
+}
+
 export default function Predictions() {
-  const [data, setData] = useState({ predictions: [], trends: [] });
+  const [data, setData] = useState<PredictionsData>({ predictions: [], trends: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,7 +86,7 @@ export default function Predictions() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data.predictions.map((p: any) => (
+            {data.predictions.map((p) => (
               <tr key={p.medicineId} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4 font-medium text-gray-800">{p.name} <span className="text-xs text-gray-500 font-normal ml-1">({p.dosage})</span></td>
                 <td className="p-4 text-center text-gray-600 font-medium">{p.soldLast30Days}</td>

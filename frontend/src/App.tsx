@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useContext } from 'react';
+import type { ReactElement } from 'react';
 
 // Pages
 import Login from './pages/Login';
@@ -15,7 +16,7 @@ import SalesHistory from './pages/SalesHistory';
 import Wastage from './pages/Wastage';
 import Layout from './components/Layout';
 
-function PublicRoute({ children }: { children: JSX.Element }) {
+function PublicRoute({ children }: { children: ReactElement }) {
   const { user, loading } = useContext(AuthContext);
   if (loading) return null;
   if (user) return <Navigate to="/" replace />;

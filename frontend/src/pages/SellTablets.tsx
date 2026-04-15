@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import axios from 'axios';
 import api from '../lib/api';
 import ScannerModal from '../components/ScannerModal';
 import { QrCode, Search, ShoppingCart, AlertCircle } from 'lucide-react';
 
+interface Medicine {
+  id: string;
+  name: string;
+  batchNo: string;
+  dosage: string;
+  quantityAvailable: number;
+  expiryDate: string;
+}
+
 export default function SellTablets() {
   const [showScanner, setShowScanner] = useState(false);
   const [batchNo, setBatchNo] = useState('');
-  const [medicine, setMedicine] = useState<any>(null);
+  const [medicine, setMedicine] = useState<Medicine | null>(null);
   const [quantitySold, setQuantitySold] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
@@ -37,7 +47,7 @@ export default function SellTablets() {
     }
   };
 
-  const handleSell = async (e: React.FormEvent) => {
+  const handleSell = async (e: FormEvent) => {
     e.preventDefault();
     if (!medicine) return;
     
@@ -55,9 +65,10 @@ export default function SellTablets() {
       setMessage(successMsg);
       setMedicine(res.data.updatedMedicine);
       setQuantitySold('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsError(true);
-      setMessage(err.response?.data?.error || 'Failed to process sale.');
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      setMessage(msg || 'Failed to process sale.');
     }
   };
 

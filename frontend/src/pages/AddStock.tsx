@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import axios from 'axios';
 import api from '../lib/api';
 import ScannerModal from '../components/ScannerModal';
 import { QrCode, Save, Search } from 'lucide-react';
@@ -55,7 +56,7 @@ export default function AddStock() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage('');
     
@@ -80,9 +81,10 @@ export default function AddStock() {
       setFormData({
         batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: ''
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submit error:', err);
-      setMessage(err.response?.data?.error || 'Failed to add stock. Please check your inputs.');
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      setMessage(msg || 'Failed to add stock. Please check your inputs.');
     } finally {
       setSaveLoading(false);
     }

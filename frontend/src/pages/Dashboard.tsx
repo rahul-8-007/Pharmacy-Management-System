@@ -58,8 +58,10 @@ export default function Dashboard() {
   return (
     <div>
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Operational Dashboard</h1>
-        <p className="text-gray-500">Select an action below to proceed.</p>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome back, {user?.name ?? 'Pharmacist'} 👋
+        </h1>
+        <p className="text-gray-500 mt-1">Select an action below to proceed.</p>
       </header>
 
       {alerts.length > 0 && (
