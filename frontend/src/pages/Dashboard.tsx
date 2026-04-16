@@ -301,35 +301,7 @@ export default function Dashboard() {
             </div>
           ))}
 
-          {/* AI Banner */}
-          <div className="mt-2 glass-banner text-white rounded-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
-            
-            <span className="inline-block bg-white/20 text-blue-50 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider mb-5">
-              AI PREDICTION
-            </span>
-            
-            <h2 className="text-xl font-bold leading-tight mb-6 relative z-10">
-              {criticalPrediction ? (
-                <>Stock out risk for<br/>{criticalPrediction.name} in 48h.</>
-              ) : (
-                <>Stock out risk for<br/>{lowStockAlerts[0]?.medicine.name || 'Ibuprofen'} in 48h.</>
-              )}
-            </h2>
-            
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex">
-                  <div className="w-6 h-6 rounded-full bg-white text-blue-700 flex items-center justify-center text-[10px] font-bold border border-blue-100 shadow-sm z-20">A</div>
-                  <div className="w-6 h-6 rounded-full bg-white text-blue-700 flex items-center justify-center text-[10px] font-bold border border-blue-100 shadow-sm -ml-2 z-10">B</div>
-                </div>
-                <span className="text-xs font-medium text-blue-50">3 suppliers available now</span>
-              </div>
-              <button className="w-full py-2.5 bg-white hover:bg-blue-50 text-blue-700 font-bold text-sm rounded-lg transition-colors shadow">
-                AUTO-REPLENISH
-              </button>
-            </div>
-          </div>
+
 
         </div>
       </div>
