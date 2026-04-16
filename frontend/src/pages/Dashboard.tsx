@@ -1,6 +1,5 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
 import {
   PackagePlus, HandCoins, ClipboardList, LineChart,
   ArrowRight, AlertTriangle
@@ -21,47 +20,58 @@ interface AlertItem {
   daysToExpiry?: number;
 }
 
-export default function Dashboard() {
-  const { user: _user } = useContext(AuthContext);
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+interface SaleHistory {
+  id: string;
+  quantitySold: number;
+  soldAt: string;
+  medicine: {
+    name: string;
+    dosage: string;
+  };
+}
 
-  // Original alert fetching logic preserved and wired to the new UI
+export default function Dashboard() {
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [recentSales, setRecentSales] = useState<SaleHistory[]>([]);
+  const [trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
+
   useEffect(() => {
-    const fetchAlerts = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/medicines');
-        const inventory: Medicine[] = res.data;
+        const [medicinesRes, salesRes, predictionsRes] = await Promise.all([
+          api.get('/medicines'),
+          api.get('/sales/history'),
+          api.get('/predictions')
+        ]);
+
+        const inventory: Medicine[] = medicinesRes.data;
         const newAlerts: AlertItem[] = [];
 
         inventory.forEach(med => {
-          if (med.quantityAvailable < 20) {
-            newAlerts.push({
-              medicine: med,
-              type: 'low',
-            });
+          if (med.quantityAvailable < 20 && med.quantityAvailable > 0) {
+            newAlerts.push({ medicine: med, type: 'low' });
           }
           const daysToExpiry = (new Date(med.expiryDate).getTime() - Date.now()) / (1000 * 3600 * 24);
-          if (daysToExpiry <= 0) {
-            newAlerts.push({
-              medicine: med,
-              type: 'expired',
-              daysToExpiry
-            });
-          } else if (daysToExpiry < 30) {
-            newAlerts.push({
-              medicine: med,
-              type: 'expiry',
-              daysToExpiry
-            });
+          if (daysToExpiry <= 0 && med.quantityAvailable > 0) {
+            newAlerts.push({ medicine: med, type: 'expired', daysToExpiry });
+          } else if (daysToExpiry < 30 && med.quantityAvailable > 0) {
+            newAlerts.push({ medicine: med, type: 'expiry', daysToExpiry });
           }
         });
-
         setAlerts(newAlerts);
+
+        // Recent sales limited to 3
+        setRecentSales(salesRes.data.slice(0, 3));
+        
+        // Grab last 7 days of trends
+        const allTrends = predictionsRes.data.trends || [];
+        const last7 = allTrends.slice(-7);
+        setTrends(last7);
       } catch (err) {
-        console.error('Failed to fetch alerts', err);
+        console.error('Failed to fetch dashboard data', err);
       }
     };
-    fetchAlerts();
+    fetchData();
   }, []);
 
   const modules = [
@@ -103,17 +113,32 @@ export default function Dashboard() {
     },
   ];
 
-  const prescriptions = [
-    { initials: 'JD', name: 'Jameson Deckard', info: 'Lisinopril 10mg • 30 Tablets', status: 'ACTIVE', time: '2 mins ago', bg: 'bg-green-100 text-green-700', isGreen: true },
-    { initials: 'SM', name: 'Sarah Miller', info: 'Metformin 500mg • 60 Tablets', status: 'PENDING REVIEW', time: '14 mins ago', bg: 'bg-blue-100 text-blue-700', isGreen: false },
-    { initials: 'RB', name: 'Robert Baratheon', info: 'Atorvastatin 20mg • 90 Tablets', status: 'ACTIVE', time: '45 mins ago', bg: 'bg-slate-100 text-slate-700', isGreen: true }
-  ];
-
   const lowStockAlerts = alerts.filter(a => a.type === 'low').slice(0, 2);
   const expiryAlerts = alerts.filter(a => Math.ceil(a.daysToExpiry ?? 99) <= 30 && a.type !== 'low').slice(0, 2);
 
+  const getInitials = (name: string) => name.substring(0, 2).toUpperCase();
+  const formatTimeAgo = (dateStr: string) => {
+    const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} mins ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hours ago`;
+    return `${Math.floor(hrs / 24)} days ago`;
+  };
+
+  // Safe max for building trend bars visually
+  const maxSales = trends.length ? Math.max(...trends.map(t => t.sales), 10) : 100;
+  
+  // Fill 7 empty elements if we don't have enough data
+  const chartBars = [...trends];
+  while (chartBars.length < 7) {
+    chartBars.unshift({ date: '', sales: 0 });
+  }
+
+  const daysLabel = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
   return (
-    <div className="fade-in max-w-7xl mx-auto p-4 md:p-8 text-slate-800 font-sans">
+    <div className="fade-in max-w-7xl mx-auto text-slate-800 font-sans">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
@@ -149,40 +174,47 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
         
         {/* Left Column */}
         <div className="col-span-1 lg:col-span-2 flex flex-col gap-8">
           
-          {/* Recent Prescriptions */}
+          {/* Recent Prescriptions / Sales */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-slate-900">Recent Prescriptions</h2>
-              <Link to="/prescriptions" className="text-sm font-semibold text-blue-600 hover:text-blue-800">
+              <h2 className="text-xl font-bold text-slate-900">Recent Prescriptions (Sales)</h2>
+              <Link to="/sales-history" className="text-sm font-semibold text-blue-600 hover:text-blue-800">
                 View All
               </Link>
             </div>
             
             <div className="flex flex-col gap-3">
-              {prescriptions.map((p, idx) => (
-                <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4 hover:border-slate-300 transition-colors">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${p.bg}`}>
-                    {p.initials}
+              {recentSales.map((sale, idx) => (
+                <div key={sale.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4 hover:border-slate-300 transition-colors">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                    {getInitials(sale.medicine.name)}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-900 text-sm">{p.name}</h4>
-                    <p className="text-xs text-slate-500">{p.info}</p>
+                    <h4 className="font-bold text-slate-900 text-sm">{sale.medicine.name}</h4>
+                    <p className="text-xs text-slate-500">{sale.medicine.dosage} • {sale.quantitySold} Dispensed</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      p.isGreen ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                       idx === 0 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-500 border-slate-200'
                     }`}>
-                      {p.status}
+                      {idx === 0 ? 'ACTIVE' : 'COMPLETED'}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-medium">{p.time}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {formatTimeAgo(sale.soldAt)}
+                    </span>
                   </div>
                 </div>
               ))}
+              {recentSales.length === 0 && (
+                <div className="text-sm text-slate-500 text-center py-6 border rounded-xl bg-slate-50 border-dashed">
+                  No recent sales records found.
+                </div>
+              )}
             </div>
           </div>
 
@@ -200,17 +232,22 @@ export default function Dashboard() {
             
             <div className="h-48 flex flex-col justify-end">
               <div className="flex items-end justify-around h-40 pb-2 border-b border-slate-100">
-                {[30, 50, 40, 60, 55, 80].map((height, i) => (
-                  <div key={i} className="w-[10%] bg-slate-100 hover:bg-slate-200 rounded-t-sm transition-all" style={{ height: `${height}%` }}></div>
-                ))}
-                <div className="w-[10%] bg-blue-600 rounded-t-sm relative group cursor-pointer" style={{ height: '90%' }}>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-2 py-1 text-[10px] rounded font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                    TODAY
-                  </div>
-                </div>
+                {chartBars.map((item, i) => {
+                  const isToday = i === 6;
+                  const heightPercent = Math.max((item.sales / maxSales) * 100, 5); // min 5% to show bar
+                  return (
+                    <div key={i} className={`w-[10%] rounded-t-sm transition-all relative group ${isToday ? 'bg-blue-600 cursor-pointer' : 'bg-slate-100 hover:bg-slate-200'}`} style={{ height: `${item.sales === 0 ? 5 : heightPercent}%` }}>
+                      {isToday && (
+                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-2 py-1 text-[10px] rounded font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                            TODAY
+                         </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex justify-around pt-3 text-[10px] font-bold text-slate-400 tracking-wider">
-                <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+                 {daysLabel.map(day => <span key={day}>{day}</span>)}
               </div>
             </div>
           </div>
@@ -244,24 +281,24 @@ export default function Dashboard() {
 
           {/* Dynamic Warning Alert Cards (Mapped from expiry data) */}
           {expiryAlerts.map((alert, idx) => (
-            <div key={`exp-${idx}`} className="bg-white border border-slate-200 rounded-xl p-6 mb-2">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-slate-900 mb-1">{alert.type === 'expired' ? 'Expired' : 'Upcoming Expiry'}</h3>
-                  <p className="text-xs text-slate-500 mb-5">{alert.medicine.name} Batch #{alert.medicine.batchNo} - {alert.type === 'expired' ? 'Expired' : `${Math.ceil(alert.daysToExpiry!)} days left`}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">{alert.medicine.quantityAvailable} UNITS</span>
-                    <button className="text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
-                      {alert.type === 'expired' ? 'DISCARD' : 'DISCOUNT SALE'}
-                    </button>
-                  </div>
-                </div>
+            <div key={`exp-${idx}`} className="bg-white border border-slate-200 rounded-xl p-6 mb-2 flex flex-col">
+              <h3 className="text-base font-bold text-slate-900 mb-1">
+                {alert.type === 'expired' ? 'Expired' : 'Upcoming Expiry'}
+              </h3>
+              <p className="text-xs text-slate-500 mb-5">
+                {alert.medicine.name} Batch #{alert.medicine.batchNo} - {alert.type === 'expired' ? 'Expired' : `${Math.ceil(alert.daysToExpiry!)} days left`}
+              </p>
+              <div className="flex items-center justify-between mt-auto">
+                <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">{alert.medicine.quantityAvailable} UNITS</span>
+                <button className="text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                  {alert.type === 'expired' ? 'DISCARD' : 'DISCOUNT SALE'}
+                </button>
               </div>
             </div>
           ))}
 
           {/* AI Banner */}
-          <div className="mt-2 text-white rounded-xl p-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)' }}>
+          <div className="mt-2 glass-banner text-white rounded-xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
             
             <span className="inline-block bg-white/20 text-blue-50 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider mb-5">
@@ -269,7 +306,7 @@ export default function Dashboard() {
             </span>
             
             <h2 className="text-xl font-bold leading-tight mb-6 relative z-10">
-              Stock out risk for<br/>Ibuprofen in 48h.
+              Stock out risk for<br/>{lowStockAlerts[0]?.medicine.name || 'Ibuprofen'} in 48h.
             </h2>
             
             <div className="relative z-10">
