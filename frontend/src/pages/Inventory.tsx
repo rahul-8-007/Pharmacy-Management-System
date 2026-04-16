@@ -269,30 +269,7 @@ export default function Inventory() {
                </div>
             </div>
 
-            {/* Supplier Contact */}
-            <div className="rounded-2xl p-6 text-white relative overflow-hidden" style={{ background: '#0a3a79' }}>
-               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
-               
-               <div className="flex items-center gap-2 text-blue-200 text-xs font-bold uppercase tracking-widest mb-6">
-                  <Users size={14} /> SUPPLIER CONTACT
-               </div>
-               
-               <h3 className="text-2xl font-bold mb-3 leading-tight text-white relative z-10">Need an emergency restock?</h3>
-               <p className="text-sm text-blue-100 opacity-90 mb-8 leading-relaxed relative z-10">
-                  Our priority distributors are available 24/7 for critical inventory shortage resolutions.
-               </p>
 
-               <div className="flex items-center justify-between relative z-10">
-                  <div className="flex -space-x-2">
-                     <div className="w-8 h-8 rounded-full border-2 border-primary bg-blue-300 flex items-center justify-center overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="avatar" /></div>
-                     <div className="w-8 h-8 rounded-full border-2 border-primary bg-indigo-300 flex items-center justify-center overflow-hidden"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" alt="avatar" /></div>
-                     <div className="w-8 h-8 rounded-full border-2 border-primary bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center">+3</div>
-                  </div>
-                  <button className="bg-white text-primary font-bold text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
-                     Contact Now
-                  </button>
-               </div>
-            </div>
 
          </div>
       </div>
