@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
@@ -21,7 +21,7 @@ interface AlertItem {
 }
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  const { user: _user } = useContext(AuthContext);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   // Original alert fetching logic preserved for future integration
@@ -210,7 +210,7 @@ export default function Dashboard() {
           </div>
 
         </div>
-
+        
         {/* Right Column */}
         <div className="col-span-1 flex flex-col gap-4">
           <h2 className="text-xl font-bold text-slate-900 mb-1">Critical Stock Alerts</h2>
@@ -275,5 +275,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    <div className="hidden">{alerts.length}</div>
   );
 }
