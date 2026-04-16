@@ -14,13 +14,13 @@ interface PredictionItem {
 
 export default function Predictions() {
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
-  const [trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
+  const [_trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPredictions = async () => {
       try {
-        const res = await api.get('/predictions');
+        const res: any = await api.get('/predictions');
         setPredictions(res.data.predictions);
         setTrends(res.data.trends);
       } catch (err) {
