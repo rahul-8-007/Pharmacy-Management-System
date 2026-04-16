@@ -3,82 +3,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-.card {
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
-}
+
 :root {
-  --bg-color: #f4f6f8;
-  --sidebar-bg: #f9f9fb;
-  --text-main: #1e293b;
+  --bg-color: #f8fafc;
+  --sidebar-bg: #ffffff;
+  --text-main: #0f172a;
   --text-muted: #64748b;
   --primary: #0f4a8e;
   --primary-hover: #0c3c73;
   --white: #ffffff;
   --border: #e2e8f0;
-  --green: #22c55e;
+  
+  --green: #16a34a;
   --green-light: #dcfce7;
-  --red: #ef4444;
+  --red: #dc2626;
   --red-light: #fee2e2;
-  --blue-light: #e0f2fe;
-  --yellow: #f59e0b;
+  --blue-light: #eff6ff;
+  --yellow: #d97706;
   --yellow-light: #fef3c7;
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08);
-  --shadow-md: 0 8px 20px -4px rgb(0 0 0 / 0.12), 0 4px 8px -2px rgb(0 0 0 / 0.06);
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --border-radius: 12px;
 }
 
 @layer base {
   body {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
   }
-  * {
-    box-sizing: border-box;
-  }
 }
 
 @layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+  
   .scrollbar-thin {
     scrollbar-width: thin;
   }
-  .badge-live {
-    background-color: var(--green-light);
-    color: var(--green);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+  }
+
   .pill-status {
-    padding: 4px 12px;
+    padding: 6px 12px;
     border-radius: 20px;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
   .pill-optimal {
     background-color: var(--green-light);
-    color: #16a34a;
+    color: var(--green);
   }
-  .pill-low {
-    background-color: var(--red-light);
-    color: #dc2626;
-  }
-  .pill-expiry {
+  .pill-warning {
     background-color: var(--yellow-light);
-    color: #d97706;
+    color: var(--yellow);
+  }
+  .pill-critical {
+    background-color: var(--red-light);
+    color: var(--red);
   }
   .pill-blue {
     background-color: var(--blue-light);
     color: var(--primary);
   }
+
   .icon-circle {
     width: 48px;
     height: 48px;
@@ -88,30 +95,22 @@
     justify-content: center;
     flex-shrink: 0;
   }
-  .action-card {
-    background: var(--white);
-    padding: 24px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid var(--border);
-    text-decoration: none;
-    color: inherit;
-  }
-  .action-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: #bfdbfe;
-  }
+
   .fade-in {
-    animation: fadeIn 0.35s ease both;
+    animation: fadeIn 0.3s ease-out forwards;
   }
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Glassmorphism utility for banners */
+  .glass-banner {
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.95), rgba(14, 165, 233, 0.95));
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 }
