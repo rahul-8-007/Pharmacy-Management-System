@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
   PackagePlus, HandCoins, ClipboardList, LineChart,
-  AlertTriangle, History, Trash2, ArrowRight
+  History, Trash2
 } from 'lucide-react';
 import api from '../lib/api';
 
