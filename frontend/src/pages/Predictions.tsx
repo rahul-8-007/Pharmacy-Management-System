@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '../lib/api';
-import { Sparkles, Clock, Users, ArrowRight, Pill, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Sparkles, Clock, Users, Pill, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface PredictionItem {
   medicineId: string;
@@ -37,6 +37,11 @@ export default function Predictions() {
   const criticalItems = predictions.filter(p => p.currentStock < 10).slice(0, 2);
 
   const topVelocity = [...predictions].sort((a, b) => b.soldLast30Days - a.soldLast30Days).slice(0, 3);
+  
+  const totalSalesLast30Days = predictions.reduce((acc, p) => acc + p.soldLast30Days, 0);
+  const dailyAvgSales = (totalSalesLast30Days / 30).toFixed(1);
+  const top1Pct = totalSalesLast30Days > 0 && topVelocity.length > 0 ? (topVelocity[0].soldLast30Days / totalSalesLast30Days) * 100 : 25;
+  const offset = 200 - (200 * top1Pct / 100);
 
   // Transform trends to chart format
   // If no trends, fall back to aesthetic mock data to preserve the design for a new account without sales yet
@@ -119,48 +124,65 @@ export default function Predictions() {
             {/* Bottom Row inside left col */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                
-               {/* Revenue Distribution */}
+               {/* Sales Distribution */}
                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-6">
-                     <h3 className="text-base font-bold text-slate-900">Revenue Distribution</h3>
+                     <h3 className="text-base font-bold text-slate-900">Sales Distribution</h3>
                      <button className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:text-blue-800">
                         View Report <ArrowRight size={14} />
                      </button>
                   </div>
-                  <p className="text-xs text-slate-500 mb-6">By Drug Category & Insurance Tier</p>
+                  <p className="text-xs text-slate-500 mb-6">By Top Selling Priority Medicines</p>
                   
                   <div className="flex items-center gap-6">
                      <div className="w-32 h-32 relative flex items-center justify-center">
                         {/* Nested square SVG to mimic the image exactly */}
                         <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                            <rect x="5" y="5" width="90" height="90" fill="none" stroke="#bbf7d0" strokeWidth="10" />
-                           <rect x="15" y="15" width="70" height="70" fill="none" stroke="#1d4ed8" strokeWidth="10" strokeDasharray="200" strokeDashoffset="50" />
+                           <rect x="15" y="15" width="70" height="70" fill="none" stroke="#1d4ed8" strokeWidth="10" strokeDasharray="200" strokeDashoffset={offset} />
                         </svg>
                         <div className="absolute text-center flex flex-col items-center">
-                           <span className="text-lg font-bold text-slate-900">$14.2k</span>
+                           <span className="text-lg font-bold text-slate-900">{dailyAvgSales}</span>
                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">DAILY AVG</span>
                         </div>
                      </div>
                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                           <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-blue-700"></span><span className="text-slate-600 font-semibold">Generic Substitutions</span></div>
-                           <span className="font-bold text-slate-900">65%</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                           <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-green-200"></span><span className="text-slate-600 font-semibold">Premium Brands</span></div>
-                           <span className="font-bold text-slate-900">22%</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                           <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span><span className="text-slate-600 font-semibold">OTC Supplements</span></div>
-                           <span className="font-bold text-slate-900">13%</span>
-                        </div>
+                        {topVelocity.length > 0 ? (
+                           topVelocity.map((item, idx) => {
+                              const pct = totalSalesLast30Days > 0 ? Math.round((item.soldLast30Days / totalSalesLast30Days) * 100) : 0;
+                              return (
+                                 <div key={item.medicineId} className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2">
+                                       <span className={`w-2.5 h-2.5 rounded-full ${idx === 0 ? 'bg-blue-700' : idx === 1 ? 'bg-green-200' : 'bg-slate-200'}`}></span>
+                                       <span className="text-slate-600 font-semibold truncate max-w-[100px]">{item.name}</span>
+                                    </div>
+                                    <span className="font-bold text-slate-900">{pct}%</span>
+                                 </div>
+                              );
+                           })
+                        ) : (
+                           <>
+                              <div className="flex items-center justify-between text-xs">
+                                 <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-blue-700"></span><span className="text-slate-600 font-semibold">Generic Substitutions</span></div>
+                                 <span className="font-bold text-slate-900">65%</span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                 <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-green-200"></span><span className="text-slate-600 font-semibold">Premium Brands</span></div>
+                                 <span className="font-bold text-slate-900">22%</span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                 <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-200"></span><span className="text-slate-600 font-semibold">OTC Supplements</span></div>
+                                 <span className="font-bold text-slate-900">13%</span>
+                              </div>
+                           </>
+                        )}
                      </div>
                   </div>
                   
                   <div className="mt-8 bg-green-50/50 rounded-xl p-4 border border-green-100 flex gap-3 items-start">
                      <Sparkles className="text-green-500 shrink-0 mt-0.5" size={16} />
                      <p className="text-xs text-green-900 leading-relaxed font-medium">
-                        <span className="font-bold">Efficiency Alert:</span> Switching 3 more diabetic brands to generics next month could increase margins by <span className="font-bold">4.2%</span>.
+                        <span className="font-bold">Efficiency Alert:</span> {criticalItems.length > 0 ? `Prioritizing restocking for ${criticalItems[0].name} will prevent operational delays next week.` : `Inventory is currently well-optimized with no imminent stockout risks.`}
                      </p>
                   </div>
                </div>
