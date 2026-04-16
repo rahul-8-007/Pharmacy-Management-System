@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
@@ -22,7 +22,7 @@ interface AlertItem {
 }
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  const { user: _user } = useContext(AuthContext);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   // Original alert fetching logic preserved and wired to the new UI
