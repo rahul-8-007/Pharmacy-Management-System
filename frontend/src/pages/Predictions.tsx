@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/api';
 
 interface PredictionItem {
@@ -14,7 +14,7 @@ interface PredictionItem {
 
 export default function Predictions() {
   const [predictions, setPredictions] = useState<PredictionItem[]>([]);
-  const [_trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
+  const [trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
