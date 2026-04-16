@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import axios from 'axios';
 import api from '../lib/api';
 import ScannerModal from '../components/ScannerModal';
-import { QrCode, Search, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import { QrCode, Search, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Info, ArrowRight, Pill } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface StockHistory {
