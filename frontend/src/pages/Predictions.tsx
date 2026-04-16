@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/api';
-import { Sparkles, Clock, Users, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, Clock, Users, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface PredictionItem {
   medicineId: string;
@@ -104,9 +104,9 @@ export default function Predictions() {
                               if (entry.val === null) {
                                  // Render the dashed border bars using SVG stroke on a rect is tricky in recharts Bar component without custom shape.
                                  // We will return a grey empty box.
-                                 return <cell key={`cell-${index}`} fill="transparent" stroke="#cbd5e1" strokeWidth={2} strokeDasharray="4 4" />;
+                                 return <Cell key={`cell-${index}`} fill="transparent" stroke="#cbd5e1" strokeWidth={2} strokeDasharray="4 4" />;
                               }
-                              return <cell key={`cell-${index}`} fill="#f1f5f9" />;
+                              return <Cell key={`cell-${index}`} fill="#f1f5f9" />;
                            })
                         }
                      </Bar>
