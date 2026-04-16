@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
@@ -16,15 +16,16 @@ interface Medicine {
 }
 
 interface AlertItem {
-  text: string;
+  medicine: Medicine;
   type: 'low' | 'expiry' | 'expired';
+  daysToExpiry?: number;
 }
 
 export default function Dashboard() {
-  const { user: _user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
-  // Original alert fetching logic preserved for future integration
+  // Original alert fetching logic preserved and wired to the new UI
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
@@ -35,20 +36,22 @@ export default function Dashboard() {
         inventory.forEach(med => {
           if (med.quantityAvailable < 20) {
             newAlerts.push({
-              text: `Low Stock: ${med.name} (Batch: ${med.batchNo}) — ${med.quantityAvailable} units left.`,
+              medicine: med,
               type: 'low',
             });
           }
           const daysToExpiry = (new Date(med.expiryDate).getTime() - Date.now()) / (1000 * 3600 * 24);
           if (daysToExpiry <= 0) {
             newAlerts.push({
-              text: `Expired: ${med.name} (Batch: ${med.batchNo}) has been removed from active inventory.`,
+              medicine: med,
               type: 'expired',
+              daysToExpiry
             });
           } else if (daysToExpiry < 30) {
             newAlerts.push({
-              text: `Expiry Alert: ${med.name} (Batch: ${med.batchNo}) expires in ${Math.ceil(daysToExpiry)} days.`,
+              medicine: med,
               type: 'expiry',
+              daysToExpiry
             });
           }
         });
@@ -105,6 +108,9 @@ export default function Dashboard() {
     { initials: 'SM', name: 'Sarah Miller', info: 'Metformin 500mg • 60 Tablets', status: 'PENDING REVIEW', time: '14 mins ago', bg: 'bg-blue-100 text-blue-700', isGreen: false },
     { initials: 'RB', name: 'Robert Baratheon', info: 'Atorvastatin 20mg • 90 Tablets', status: 'ACTIVE', time: '45 mins ago', bg: 'bg-slate-100 text-slate-700', isGreen: true }
   ];
+
+  const lowStockAlerts = alerts.filter(a => a.type === 'low').slice(0, 2);
+  const expiryAlerts = alerts.filter(a => Math.ceil(a.daysToExpiry ?? 99) <= 30 && a.type !== 'low').slice(0, 2);
 
   return (
     <div className="fade-in max-w-7xl mx-auto p-4 md:p-8 text-slate-800 font-sans">
@@ -210,41 +216,49 @@ export default function Dashboard() {
           </div>
 
         </div>
-        
+
         {/* Right Column */}
         <div className="col-span-1 flex flex-col gap-4">
           <h2 className="text-xl font-bold text-slate-900 mb-1">Critical Stock Alerts</h2>
-          
-          {/* Critical Alert Card */}
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 relative overflow-hidden group">
-            <h3 className="text-base font-bold text-red-800 mb-1 relative z-10">Amlodipine 5mg</h3>
-            <p className="text-xs text-red-600 opacity-80 mb-5 relative z-10">Stock Level: 12 Units</p>
-            
-            <div className="h-1.5 bg-red-200 rounded-full w-full relative z-10">
-              <div className="bg-red-700 h-full rounded-full" style={{ width: '15%' }}></div>
-            </div>
-            
-            <button className="w-full mt-5 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-lg transition-colors relative z-10 shadow-sm">
-              RESTOCK NOW
-            </button>
-            <AlertTriangle className="absolute -bottom-6 -right-6 text-red-600 opacity-5 group-hover:scale-110 transition-transform duration-500" size={120} />
-          </div>
 
-          {/* Warning Alert Card */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <h3 className="text-base font-bold text-slate-900 mb-1">Upcoming Expiry</h3>
-                <p className="text-xs text-slate-500 mb-5">Amoxicillin Batch #442 - 15 days left</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">340 UNITS</span>
-                  <button className="text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
-                    DISCOUNT SALE
-                  </button>
+          {lowStockAlerts.length === 0 && expiryAlerts.length === 0 && (
+            <p className="text-sm text-slate-500 italic mb-4">No critical alerts right now.</p>
+          )}
+          
+          {/* Dynamic Critical Alert Cards (Mapped from low stock data) */}
+          {lowStockAlerts.map((alert, idx) => (
+            <div key={`low-${idx}`} className="bg-red-50 border border-red-100 rounded-xl p-6 relative overflow-hidden group mb-2">
+              <h3 className="text-base font-bold text-red-800 mb-1 relative z-10">{alert.medicine.name}</h3>
+              <p className="text-xs text-red-600 opacity-80 mb-5 relative z-10">Stock Level: {alert.medicine.quantityAvailable} Units</p>
+              
+              <div className="h-1.5 bg-red-200 rounded-full w-full relative z-10 overflow-hidden">
+                <div className="bg-red-700 h-full rounded-full" style={{ width: `${Math.min((alert.medicine.quantityAvailable / 20) * 100, 100)}%` }}></div>
+              </div>
+              
+              <button className="w-full mt-5 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-lg transition-colors relative z-10 shadow-sm">
+                RESTOCK NOW
+              </button>
+              <AlertTriangle className="absolute -bottom-6 -right-6 text-red-600 opacity-5 group-hover:scale-110 transition-transform duration-500" size={120} />
+            </div>
+          ))}
+
+          {/* Dynamic Warning Alert Cards (Mapped from expiry data) */}
+          {expiryAlerts.map((alert, idx) => (
+            <div key={`exp-${idx}`} className="bg-white border border-slate-200 rounded-xl p-6 mb-2">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <h3 className="text-base font-bold text-slate-900 mb-1">{alert.type === 'expired' ? 'Expired' : 'Upcoming Expiry'}</h3>
+                  <p className="text-xs text-slate-500 mb-5">{alert.medicine.name} Batch #{alert.medicine.batchNo} - {alert.type === 'expired' ? 'Expired' : `${Math.ceil(alert.daysToExpiry!)} days left`}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded">{alert.medicine.quantityAvailable} UNITS</span>
+                    <button className="text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                      {alert.type === 'expired' ? 'DISCARD' : 'DISCOUNT SALE'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ))}
 
           {/* AI Banner */}
           <div className="mt-2 text-white rounded-xl p-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)' }}>
@@ -271,7 +285,7 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          <div className="hidden">{alerts.length}</div>
+
         </div>
       </div>
     </div>
