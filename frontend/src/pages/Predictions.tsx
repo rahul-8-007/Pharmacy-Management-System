@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, ArrowRight, Pill } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/api';
 
 interface PredictionItem {
@@ -149,7 +148,5 @@ export default function Predictions() {
         </div>
       </div>
     </div>
-  );
-</div>
   );
 }
