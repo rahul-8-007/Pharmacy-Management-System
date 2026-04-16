@@ -271,10 +271,9 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-
+          <div className="hidden">{alerts.length}</div>
         </div>
       </div>
     </div>
-    <div className="hidden">{alerts.length}</div>
   );
 }
