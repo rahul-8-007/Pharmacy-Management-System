@@ -176,39 +176,75 @@ export default function Dashboard() {
       )}
 
       {/* Action Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
-        {modules.map(mod => (
-          <Link
-            key={mod.name}
-            to={mod.path}
-            className="action-card"
-          >
-            <div
-              className="icon-circle"
-              style={{ background: mod.iconBg, color: mod.iconColor }}
-            >
-              {mod.icon}
+      <div className="grid lg:grid-cols-3 gap-6">
+
+  {/* LEFT SIDE */}
+  <div className="lg:col-span-2 space-y-6">
+
+    {/* Cards */}
+    <div className="grid sm:grid-cols-2 gap-6">
+      {modules.slice(0,4).map(mod => (
+        <Link key={mod.name} to={mod.path} className="action-card">
+          <div className="icon-circle" style={{ background: mod.iconBg, color: mod.iconColor }}>
+            {mod.icon}
+          </div>
+          <div>
+            <h3 className="text-base font-bold">{mod.name}</h3>
+            <p className="text-xs">{mod.desc}</p>
+          </div>
+          <span className="text-xs font-bold flex items-center gap-1 mt-1">
+            {mod.linkLabel} <ArrowRight size={13} />
+          </span>
+        </Link>
+      ))}
+    </div>
+
+        {/* Recent Prescriptions */}
+        <div className="card">
+          <h2 className="font-bold text-lg mb-3">Recent Prescriptions</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between p-3 bg-gray-100 rounded-lg">
+              <div>
+                <p className="font-medium">Jameson Deckard</p>
+                <p className="text-sm text-gray-500">Lisinopril 10mg • 30 Tablets</p>
+              </div>
+              <span className="text-green-600 text-sm">ACTIVE</span>
             </div>
-            <div>
-              <h3
-                className="text-base font-bold"
-                style={{ color: 'var(--text-main)' }}
-              >
-                {mod.name}
-              </h3>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {mod.desc}
-              </p>
-            </div>
-            <span
-              className="text-xs font-bold flex items-center gap-1 mt-1"
-              style={{ color: mod.linkColor }}
-            >
-              {mod.linkLabel} <ArrowRight size={13} />
-            </span>
-          </Link>
-        ))}
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="card">
+          <h2 className="font-bold text-lg mb-3">Sales & Demand Trend</h2>
+          <div className="h-40 bg-gray-200 rounded-lg flex items-center justify-center">
+            Chart goes here
+          </div>
+        </div>
+    
       </div>
+
+      {/* RIGHT SIDE */}
+      <div className="space-y-6">
+    
+        <div className="card border-l-4 border-red-500">
+          <h2 className="font-bold text-lg mb-2">Critical Stock Alerts</h2>
+          <p className="text-red-600">Amlodipine 5mg</p>
+          <p className="text-sm text-gray-500">Stock Level: 12 Units</p>
+          <button className="mt-3 bg-red-600 text-white px-3 py-1 rounded">
+            RESTOCK NOW
+          </button>
+        </div>
+    
+        <div className="card bg-blue-600 text-white">
+          <h2 className="font-bold">Stock Risk</h2>
+          <p>Ibuprofen may run out in 48h</p>
+          <button className="mt-3 bg-white text-blue-600 px-3 py-1 rounded">
+            AUTO-REPLENISH
+          </button>
+        </div>
+    
+      </div>
+    
     </div>
   );
 }
