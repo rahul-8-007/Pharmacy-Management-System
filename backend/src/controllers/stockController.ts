@@ -1,7 +1,22 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prismaClient';
+export const getStockHistory = async (req, res) => {
+  try {
+    const history = await prisma.stockEntry.findMany({
+      include: {
+        medicine: true,
+      },
+      orderBy: {
+        addedAt: 'desc',
+      },
+    });
 
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch stock history' });
+  }
+};
 export const addStock = async (req: AuthRequest, res: Response) => {
   try {
     const { 
