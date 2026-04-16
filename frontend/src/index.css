@@ -3,7 +3,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
 :root {
   --bg-color: #f4f6f8;
   --sidebar-bg: #f9f9fb;
