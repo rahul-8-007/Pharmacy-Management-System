@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [recentSales, setRecentSales] = useState<SaleHistory[]>([]);
   const [trends, setTrends] = useState<{ date: string; sales: number }[]>([]);
+  const [predictions, setPredictions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,6 +68,7 @@ export default function Dashboard() {
         const allTrends = predictionsRes.data.trends || [];
         const last7 = allTrends.slice(-7);
         setTrends(last7);
+        setPredictions(predictionsRes.data.predictions || []);
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
       }
@@ -136,6 +138,8 @@ export default function Dashboard() {
   }
 
   const daysLabel = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  
+  const criticalPrediction = predictions.find(p => p.status === 'Reorder Needed') || predictions[0];
 
   return (
     <div className="fade-in max-w-7xl mx-auto text-slate-800 font-sans">
@@ -306,7 +310,11 @@ export default function Dashboard() {
             </span>
             
             <h2 className="text-xl font-bold leading-tight mb-6 relative z-10">
-              Stock out risk for<br/>{lowStockAlerts[0]?.medicine.name || 'Ibuprofen'} in 48h.
+              {criticalPrediction ? (
+                <>Stock out risk for<br/>{criticalPrediction.name} in 48h.</>
+              ) : (
+                <>Stock out risk for<br/>{lowStockAlerts[0]?.medicine.name || 'Ibuprofen'} in 48h.</>
+              )}
             </h2>
             
             <div className="relative z-10">
