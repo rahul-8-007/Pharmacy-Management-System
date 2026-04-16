@@ -87,10 +87,36 @@ export default function AddStock() {
          throw new Error('Not a JSON object');
       }
     } catch (e) {
-      // If it fails to parse as structural JSON, try intelligent text extraction
-      const extractField = (pattern: RegExp) => {
-        const match = text.match(pattern);
-        return match ? match[1].trim() : '';
+         console.log("RAW SCANNED:", text);
+      
+         // SIMPLE fallback first
+         if (text.length < 50) {
+            // assume it's just a batch number
+            setFormData(prev => ({ ...prev, batchNo: text }));
+            fetchMedicineDetails(text);
+            return;
+         }
+      
+         // Try comma format
+         if (text.includes(',')) {
+            const parts = text.split(',');
+            setFormData(prev => ({
+               ...prev,
+               batchNo: parts[0]?.trim() || '',
+               name: parts[1]?.trim() || '',
+               dosage: parts[2]?.trim() || '',
+               manufacturer: parts[3]?.trim() || '',
+               expiryDate: parts[4]?.trim() || '',
+               quantityAdded: parts[5]?.trim() || '100',
+            }));
+            setIsSuccess(true);
+            setMessage("Extracted from comma format");
+            return;
+         }
+      
+         // FINAL fallback
+         setFormData(prev => ({ ...prev, batchNo: text }));
+         fetchMedicineDetails(text);
       };
       
       const extractedBatch = extractField(/(?:batch|lot|id)(?:\s*no\.?)?\s*[:\-]?\s+([a-zA-Z0-9\-_]+)/i);
