@@ -128,123 +128,87 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="fade-in">
-      {/* Page Header */}
-      <div
-        className="flex items-center justify-between mb-8"
-      >
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--text-main)' }}>
-            Morning Overview
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Welcome back, <strong>{user?.name ?? 'Pharmacist'}</strong> — {today}
-          </p>
-        </div>
-        <span className="badge-live">● SYSTEM LIVE</span>
+  <div className="fade-in">
+
+    {/* Header */}
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h1 className="text-3xl font-bold">Morning Overview</h1>
+        <p className="mt-1 text-sm">
+          Welcome back, <strong>{user?.name ?? 'Pharmacist'}</strong> — {today}
+        </p>
       </div>
-
-      {/* Alerts Panel */}
-      {alerts.length > 0 && (
-        <div
-          className="mb-8 p-5 rounded-xl border-l-4"
-          style={{
-            background: 'linear-gradient(to right, #fff, #fef2f2)',
-            borderLeftColor: 'var(--red)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
-            <h3 className="font-bold text-sm" style={{ color: '#991b1b' }}>
-              Action Required — {alerts.length} Alert{alerts.length > 1 ? 's' : ''}
-            </h3>
-          </div>
-          <ul className="space-y-1.5">
-            {alerts.slice(0, 5).map((alert, idx) => (
-              <li key={idx} className="text-sm" style={{ color: '#b91c1c' }}>
-                • {alert.text}
-              </li>
-            ))}
-            {alerts.length > 5 && (
-              <li className="text-sm font-medium" style={{ color: '#b91c1c' }}>
-                • ...and {alerts.length - 5} more alerts. Check Inventory for full details.
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {/* Action Cards Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-
-  {/* LEFT SIDE */}
-  <div className="lg:col-span-2 space-y-6">
-
-    {/* Cards */}
-    <div className="grid sm:grid-cols-2 gap-6">
-      {modules.slice(0,4).map(mod => (
-        <Link key={mod.name} to={mod.path} className="action-card">
-          <div className="icon-circle" style={{ background: mod.iconBg, color: mod.iconColor }}>
-            {mod.icon}
-          </div>
-          <div>
-            <h3 className="text-base font-bold">{mod.name}</h3>
-            <p className="text-xs">{mod.desc}</p>
-          </div>
-          <span className="text-xs font-bold flex items-center gap-1 mt-1">
-            {mod.linkLabel} <ArrowRight size={13} />
-          </span>
-        </Link>
-      ))}
+      <span className="badge-live">● SYSTEM LIVE</span>
     </div>
 
-        {/* Recent Prescriptions */}
+    {/* Alerts */}
+    {alerts.length > 0 && (
+      <div className="mb-8 p-5 rounded-xl border-l-4 border-red-500">
+        <h3 className="font-bold text-sm mb-2">
+          Alerts — {alerts.length}
+        </h3>
+        <ul>
+          {alerts.slice(0, 5).map((alert, idx) => (
+            <li key={idx}>• {alert.text}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {/* NEW LAYOUT */}
+    <div className="grid lg:grid-cols-3 gap-6">
+
+      {/* LEFT */}
+      <div className="lg:col-span-2 space-y-6">
+
+        {/* Cards */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          {modules.slice(0,4).map(mod => (
+            <Link key={mod.name} to={mod.path} className="action-card">
+              <div className="icon-circle">
+                {mod.icon}
+              </div>
+              <div>
+                <h3 className="font-bold">{mod.name}</h3>
+                <p className="text-sm">{mod.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Recent */}
         <div className="card">
           <h2 className="font-bold text-lg mb-3">Recent Prescriptions</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between p-3 bg-gray-100 rounded-lg">
-              <div>
-                <p className="font-medium">Jameson Deckard</p>
-                <p className="text-sm text-gray-500">Lisinopril 10mg • 30 Tablets</p>
-              </div>
-              <span className="text-green-600 text-sm">ACTIVE</span>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500">Demo content</p>
         </div>
 
         {/* Chart */}
         <div className="card">
-          <h2 className="font-bold text-lg mb-3">Sales & Demand Trend</h2>
+          <h2 className="font-bold text-lg mb-3">Sales Trend</h2>
           <div className="h-40 bg-gray-200 rounded-lg flex items-center justify-center">
-            Chart goes here
+            Chart
           </div>
         </div>
-    
+
       </div>
 
-      {/* RIGHT SIDE */}
+      {/* RIGHT */}
       <div className="space-y-6">
-    
+
         <div className="card border-l-4 border-red-500">
-          <h2 className="font-bold text-lg mb-2">Critical Stock Alerts</h2>
-          <p className="text-red-600">Amlodipine 5mg</p>
-          <p className="text-sm text-gray-500">Stock Level: 12 Units</p>
-          <button className="mt-3 bg-red-600 text-white px-3 py-1 rounded">
-            RESTOCK NOW
-          </button>
+          <h2 className="font-bold">Critical Alerts</h2>
+          <p className="text-sm">Low stock detected</p>
         </div>
-    
+
         <div className="card bg-blue-600 text-white">
-          <h2 className="font-bold">Stock Risk</h2>
-          <p>Ibuprofen may run out in 48h</p>
-          <button className="mt-3 bg-white text-blue-600 px-3 py-1 rounded">
-            AUTO-REPLENISH
-          </button>
+          <h2 className="font-bold">Prediction</h2>
+          <p>Stock risk detected</p>
         </div>
-    
+
       </div>
-    
+
     </div>
-  );
+
+  </div>
+);
 }
