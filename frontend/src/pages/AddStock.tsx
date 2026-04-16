@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import axios from 'axios';
 import api from '../lib/api';
 import ScannerModal from '../components/ScannerModal';
-import { QrCode, Search, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import { QrCode, Search, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface StockHistory {
@@ -52,8 +52,63 @@ export default function AddStock() {
 
   const handleScanSuccess = (text: string) => {
     setShowScanner(false);
-    setFormData(prev => ({ ...prev, batchNo: text }));
-    fetchMedicineDetails(text);
+    
+    try {
+      // First, try parsing the scanned raw text as structured JSON
+      const scannedData = JSON.parse(text);
+      
+      // If the scanner just read a standard numerical barcode (like 1234567), JSON.parse won't throw an error, 
+      // it just returns a number. We need to ensure it's a real Object with keys to use this branch.
+      if (typeof scannedData === 'object' && scannedData !== null && Object.keys(scannedData).length > 0) {
+         setFormData(prev => ({
+           ...prev,
+           // @ts-ignore
+           batchNo: scannedData.batchNo || scannedData.batch || scannedData.id || text,
+           // @ts-ignore
+           name: scannedData.name || scannedData.medicine || '',
+           // @ts-ignore
+           dosage: scannedData.dosage || '',
+           // @ts-ignore
+           manufacturer: scannedData.manufacturer || scannedData.mfg || '',
+           // @ts-ignore
+           expiryDate: scannedData.expiryDate || scannedData.expiry || '',
+           // @ts-ignore
+           quantityAdded: scannedData.quantity || scannedData.qty || scannedData.quantityAdded || '100',
+           // @ts-ignore
+           isControlled: scannedData.isControlled === true || scannedData.isControlled === 'true',
+           // @ts-ignore
+           requiresRefrigeration: scannedData.requiresRefrigeration === true || scannedData.requiresRefrigeration === 'true',
+         }));
+         setIsSuccess(true);
+         setMessage('Extracted all medicine details directly from the QR code.');
+         return; // Successfully handled via JSON
+      } else {
+         // If it's a primitive (like a strict barcode number), purposefully trigger the catch block flow
+         throw new Error('Not a JSON object');
+      }
+    } catch (e) {
+      // If it fails to parse as structural JSON, check if it's a comma-separated format
+      if (text.includes(',')) {
+         const parts = text.split(',');
+         setFormData(prev => ({
+           ...prev,
+           batchNo: parts[0]?.trim() || '',
+           name: parts[1]?.trim() || '',
+           dosage: parts[2]?.trim() || '',
+           manufacturer: parts[3]?.trim() || '',
+           expiryDate: parts[4]?.trim() || '',
+           quantityAdded: parts[5]?.trim() || '100',
+           isControlled: false,
+           requiresRefrigeration: false,
+         }));
+         setIsSuccess(true);
+         setMessage('Extracted all text details from the barcode.');
+      } else {
+         // Fallback: If it's just a raw plain-text ID/Barcode, use our AI/DB lookup fallback
+         setFormData(prev => ({ ...prev, batchNo: text }));
+         fetchMedicineDetails(text);
+      }
+    }
   };
 
   const fetchMedicineDetails = async (batchNo: string) => {
