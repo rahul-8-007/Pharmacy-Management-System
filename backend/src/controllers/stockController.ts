@@ -1,7 +1,7 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import prisma from '../prismaClient';
-export const getStockHistory = async (req, res) => {
+export const getStockHistory = async (req: Request, res: Response) => {
   try {
     const history = await prisma.stockEntry.findMany({
       include: {
