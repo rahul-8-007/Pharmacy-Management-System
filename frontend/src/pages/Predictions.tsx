@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '../lib/api';
-import { Sparkles, Clock, Users, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Sparkles, Clock, Users, ArrowRight, Pill, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface PredictionItem {
   medicineId: string;
