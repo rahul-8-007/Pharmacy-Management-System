@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import {
   PackagePlus, HandCoins, ClipboardList, LineChart,
-  History, Trash2
+  AlertTriangle, History, Trash2, ArrowRight
 } from 'lucide-react';
 import api from '../lib/api';
 
@@ -128,87 +128,87 @@ export default function Dashboard() {
   });
 
   return (
-  <div className="fade-in">
-
-    {/* Header */}
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <h1 className="text-3xl font-bold">Morning Overview</h1>
-        <p className="mt-1 text-sm">
-          Welcome back, <strong>{user?.name ?? 'Pharmacist'}</strong> — {today}
-        </p>
-      </div>
-      <span className="badge-live">● SYSTEM LIVE</span>
-    </div>
-
-    {/* Alerts */}
-    {alerts.length > 0 && (
-      <div className="mb-8 p-5 rounded-xl border-l-4 border-red-500">
-        <h3 className="font-bold text-sm mb-2">
-          Alerts — {alerts.length}
-        </h3>
-        <ul>
-          {alerts.slice(0, 5).map((alert, idx) => (
-            <li key={idx}>• {alert.text}</li>
-          ))}
-        </ul>
-      </div>
-    )}
-
-    {/* NEW LAYOUT */}
-    <div className="grid lg:grid-cols-3 gap-6">
-
-      {/* LEFT */}
-      <div className="lg:col-span-2 space-y-6">
-
-        {/* Cards */}
-        <div className="grid sm:grid-cols-2 gap-6">
-          {modules.slice(0,4).map(mod => (
-            <Link key={mod.name} to={mod.path} className="action-card">
-              <div className="icon-circle">
-                {mod.icon}
-              </div>
-              <div>
-                <h3 className="font-bold">{mod.name}</h3>
-                <p className="text-sm">{mod.desc}</p>
-              </div>
-            </Link>
-          ))}
+    <div className="fade-in">
+      {/* Page Header */}
+      <div
+        className="flex items-center justify-between mb-8"
+      >
+        <div>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--text-main)' }}>
+            Morning Overview
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+            Welcome back, <strong>{user?.name ?? 'Pharmacist'}</strong> — {today}
+          </p>
         </div>
+        <span className="badge-live">● SYSTEM LIVE</span>
+      </div>
 
-        {/* Recent */}
-        <div className="card">
-          <h2 className="font-bold text-lg mb-3">Recent Prescriptions</h2>
-          <p className="text-sm text-gray-500">Demo content</p>
-        </div>
-
-        {/* Chart */}
-        <div className="card">
-          <h2 className="font-bold text-lg mb-3">Sales Trend</h2>
-          <div className="h-40 bg-gray-200 rounded-lg flex items-center justify-center">
-            Chart
+      {/* Alerts Panel */}
+      {alerts.length > 0 && (
+        <div
+          className="mb-8 p-5 rounded-xl border-l-4"
+          style={{
+            background: 'linear-gradient(to right, #fff, #fef2f2)',
+            borderLeftColor: 'var(--red)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
+            <h3 className="font-bold text-sm" style={{ color: '#991b1b' }}>
+              Action Required — {alerts.length} Alert{alerts.length > 1 ? 's' : ''}
+            </h3>
           </div>
+          <ul className="space-y-1.5">
+            {alerts.slice(0, 5).map((alert, idx) => (
+              <li key={idx} className="text-sm" style={{ color: '#b91c1c' }}>
+                • {alert.text}
+              </li>
+            ))}
+            {alerts.length > 5 && (
+              <li className="text-sm font-medium" style={{ color: '#b91c1c' }}>
+                • ...and {alerts.length - 5} more alerts. Check Inventory for full details.
+              </li>
+            )}
+          </ul>
         </div>
+      )}
 
+      {/* Action Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
+        {modules.map(mod => (
+          <Link
+            key={mod.name}
+            to={mod.path}
+            className="action-card"
+          >
+            <div
+              className="icon-circle"
+              style={{ background: mod.iconBg, color: mod.iconColor }}
+            >
+              {mod.icon}
+            </div>
+            <div>
+              <h3
+                className="text-base font-bold"
+                style={{ color: 'var(--text-main)' }}
+              >
+                {mod.name}
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {mod.desc}
+              </p>
+            </div>
+            <span
+              className="text-xs font-bold flex items-center gap-1 mt-1"
+              style={{ color: mod.linkColor }}
+            >
+              {mod.linkLabel} <ArrowRight size={13} />
+            </span>
+          </Link>
+        ))}
       </div>
-
-      {/* RIGHT */}
-      <div className="space-y-6">
-
-        <div className="card border-l-4 border-red-500">
-          <h2 className="font-bold">Critical Alerts</h2>
-          <p className="text-sm">Low stock detected</p>
-        </div>
-
-        <div className="card bg-blue-600 text-white">
-          <h2 className="font-bold">Prediction</h2>
-          <p>Stock risk detected</p>
-        </div>
-
-      </div>
-
     </div>
-
-  </div>
-);
+  );
 }
