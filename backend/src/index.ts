@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: "https://pharma-iiitdm.netlify.app",
+  origin: "https://pharmacy-iiitdm.netlify.app",
   credentials: true
 }));
 app.use(express.json());
