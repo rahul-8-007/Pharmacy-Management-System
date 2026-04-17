@@ -51,76 +51,29 @@ export default function AddStock() {
   }, []);
 
   const handleScanSuccess = (text: string) => {
-    setShowScanner(false);
-    const extractField = (regex: RegExp) => {
-      const match = text.match(regex);
-      return match ? match[1].trim() : '';
-   };
-    try {
-      // First, try parsing the scanned raw text as structured JSON
-      const scannedData = JSON.parse(text);
-      
-      // If the scanner just read a standard numerical barcode (like 1234567), JSON.parse won't throw an error, 
-      // it just returns a number. We need to ensure it's a real Object with keys to use this branch.
-      if (typeof scannedData === 'object' && scannedData !== null && Object.keys(scannedData).length > 0) {
-         setFormData(prev => ({
-           ...prev,
-           // @ts-ignore
-           batchNo: scannedData.batchNo || scannedData.batch || scannedData.id || text,
-           // @ts-ignore
-           name: scannedData.name || scannedData.medicine || '',
-           // @ts-ignore
-           dosage: scannedData.dosage || '',
-           // @ts-ignore
-           manufacturer: scannedData.manufacturer || scannedData.mfg || '',
-           // @ts-ignore
-           expiryDate: scannedData.expiryDate || scannedData.expiry || '',
-           // @ts-ignore
-           quantityAdded: scannedData.quantity || scannedData.qty || scannedData.quantityAdded || '100',
-           // @ts-ignore
-           isControlled: scannedData.isControlled === true || scannedData.isControlled === 'true',
-           // @ts-ignore
-           requiresRefrigeration: scannedData.requiresRefrigeration === true || scannedData.requiresRefrigeration === 'true',
-         }));
-         setIsSuccess(true);
-         setMessage('Extracted all medicine details directly from the QR code.');
-         return; // Successfully handled via JSON
-      } else {
-         // If it's a primitive (like a strict barcode number), purposefully trigger the catch block flow
-         throw new Error('Not a JSON object');
-      }
-    } catch (e) {
-         console.log("RAW SCANNED:", text);
-      
-         // SIMPLE fallback first
-         if (text.length < 50) {
-            // assume it's just a batch number
-            setFormData(prev => ({ ...prev, batchNo: text }));
-            fetchMedicineDetails(text);
-            return;
-         }
-      
-         // Try comma format
-         if (text.includes(',')) {
-            const parts = text.split(',');
-            setFormData(prev => ({
-               ...prev,
-               batchNo: parts[0]?.trim() || '',
-               name: parts[1]?.trim() || '',
-               dosage: parts[2]?.trim() || '',
-               manufacturer: parts[3]?.trim() || '',
-               expiryDate: parts[4]?.trim() || '',
-               quantityAdded: parts[5]?.trim() || '100',
-            }));
-            setIsSuccess(true);
-            setMessage("Extracted from comma format");
-            return;
-         }
-      
-         // FINAL fallback
-         setFormData(prev => ({ ...prev, batchNo: text }));
-         fetchMedicineDetails(text);
-      }
+  setShowScanner(false);
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+
+    setFormData(prev => ({
+      ...prev,
+      batchNo: parts[0] || "",
+      name: parts[1] || "",
+      dosage: parts[2] || "",
+      manufacturer: parts[3] || "",
+      expiryDate: parts[4] || "",
+      quantityAdded: parts[5] || "100"
+    }));
+
+    setMessage("Scanned successfully");
+    setIsSuccess(true);
+    return;
+  }
+
+  setFormData(prev => ({ ...prev, batchNo: text }));
+  fetchMedicineDetails(text);
+};
       
       const extractedBatch = extractField(/(?:batch|lot|id)(?:\s*no\.?)?\s*[:\-]?\s+([a-zA-Z0-9\-_]+)/i);
       const extractedName = extractField(/(?:name|medicine|drug|product)\s*[:\-]?\s+([a-zA-Z0-9\s\.\-]+?)(?=\s*(?:dosage|strength|dose|batch|lot|mfg|manufacturer|exp|expiry|qty|quantity|$|\n|,))/i);
