@@ -497,5 +497,4 @@ export default function AddStock() {
       </div>
     </div>
   );
-};
-export default AddStock;
+}
