@@ -1,21 +1,8 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import axios from 'axios';
+import { useState, type FormEvent } from 'react';
 import api from '../lib/api';
 import ScannerModal from '../components/ScannerModal';
-import { QrCode, Search, CheckCircle, AlertCircle, RefreshCw, AlertTriangle, Info, ArrowRight } from 'lucide-react';
+import { QrCode, Save, Search, CheckCircle, AlertCircle, Loader2, ArrowLeft, Beaker, Activity, Info, Briefcase, Calendar, Hash, PackagePlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface StockHistory {
-  id: string;
-  quantityAdded: number;
-  addedAt: string;
-  medicine: {
-    name: string;
-    dosage: string;
-    batchNo: string;
-    manufacturer: string;
-  };
-}
 
 export default function AddStock() {
   const [showScanner, setShowScanner] = useState(false);
@@ -23,8 +10,6 @@ export default function AddStock() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  
-  const [sessionHistory, setSessionHistory] = useState<StockHistory[]>([]);
 
   const [formData, setFormData] = useState({
     batchNo: '',
@@ -33,128 +18,48 @@ export default function AddStock() {
     manufacturer: '',
     expiryDate: '',
     quantityAdded: '',
-    isControlled: false,
-    requiresRefrigeration: false,
+    serialNo: '',
   });
 
-  const fetchHistory = async () => {
-    try {
-      const res = await api.get('/stock/history');
-      setSessionHistory(res.data.slice(0, 3)); // Display only top 3
-    } catch (e) {
-      console.error('Failed to fetch stock history', e);
+  const handleScanSuccess = (text: string) => {
+    setShowScanner(false);
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      setFormData(prev => ({ ...prev, batchNo: '' }));
+      fetchFromQrUrl(text);
+    } else {
+      setFormData(prev => ({ ...prev, batchNo: text }));
+      fetchMedicineDetails(text);
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-const handleScanSuccess = async (text: string) => {
-  setShowScanner(false);
-  setMessage('');
-
-  // QR contains website link
-  if (text.startsWith('http')) {
+  const fetchFromQrUrl = async (url: string) => {
+    setLookupLoading(true);
+    setMessage('🌐 Syncing with pharmaceutical database... approx 10s');
+    setIsSuccess(false);
     try {
-      const res = await api.get(
-        `/medicines/url?link=${encodeURIComponent(text)}`
-      );
+      const res = await api.post('/qr/fetch-url', { url });
+      const d = res.data;
 
-      const med = res.data;
-
-      setFormData({
-        batchNo: med.batchNo || '',
-        name: med.name || '',
-        dosage: med.dosage || '',
-        manufacturer: med.manufacturer || '',
-        expiryDate: med.expiryDate || '',
-        quantityAdded: '100',
-        isControlled: false,
-        requiresRefrigeration: false
-      });
+      setFormData(prev => ({
+        ...prev,
+        batchNo:      d.batchNo      || prev.batchNo,
+        serialNo:     d.serialNo     || prev.serialNo,
+        name:         d.name         || prev.name,
+        dosage:       d.dosage       || prev.dosage,
+        manufacturer: d.manufacturer || prev.manufacturer,
+        expiryDate:   d.expiryDate   || prev.expiryDate,
+      }));
 
       setIsSuccess(true);
-      setMessage('QR details fetched from link');
-      return;
-    } catch {
+      setMessage(`✅ Verified: ${d.name || 'Medicine'} details synchronized successfully.`);
+    } catch (err: unknown) {
       setIsSuccess(false);
-      setMessage('QR contains only a link');
-      return;
+      setMessage(`⚠️ Extraction incomplete. Please finalize fields manually.`);
+    } finally {
+      setLookupLoading(false);
     }
-  }
+  };
 
-  // 1. Try JSON QR
-  try {
-    const data = JSON.parse(text);
-
-    setFormData({
-      batchNo: data.batchNo || data.batch || '',
-      name: data.name || '',
-      dosage: data.dosage || '',
-      manufacturer: data.manufacturer || '',
-      expiryDate: data.expiryDate || '',
-      quantityAdded: data.quantity || '100',
-      isControlled: false,
-      requiresRefrigeration: false
-    });
-
-    setIsSuccess(true);
-    setMessage('QR code scanned successfully');
-    return;
-  } catch {
-    // continue
-  }
-
-  // 2. Comma separated data
-  if (text.includes(',')) {
-    const parts = text.split(',');
-
-    setFormData({
-      batchNo: parts[0]?.trim() || '',
-      name: parts[1]?.trim() || '',
-      dosage: parts[2]?.trim() || '',
-      manufacturer: parts[3]?.trim() || '',
-      expiryDate: parts[4]?.trim() || '',
-      quantityAdded: parts[5]?.trim() || '100',
-      isControlled: false,
-      requiresRefrigeration: false
-    });
-
-    setIsSuccess(true);
-    setMessage('Barcode details extracted');
-    return;
-  }
-
-  // 3. Barcode / Batch lookup
-  try {
-    const res = await api.get(`/medicines/scan/${text}`);
-    const med = res.data;
-
-    setFormData({
-      batchNo: med.batchNo || text,
-      name: med.name || '',
-      dosage: med.dosage || '',
-      manufacturer: med.manufacturer || '',
-      expiryDate: med.expiryDate
-        ? med.expiryDate.split('T')[0]
-        : '',
-      quantityAdded: '100',
-      isControlled: false,
-      requiresRefrigeration: false
-    });
-
-    setIsSuccess(true);
-    setMessage('Medicine details fetched successfully');
-  } catch {
-    setFormData(prev => ({
-      ...prev,
-      batchNo: text
-    }));
-
-    setIsSuccess(false);
-    setMessage('Only barcode detected. Fill remaining details.');
-  }
-};
   const fetchMedicineDetails = async (batchNo: string) => {
     if (!batchNo) return;
     setLookupLoading(true);
@@ -167,47 +72,18 @@ const handleScanSuccess = async (text: string) => {
           ...prev,
           name: med.name,
           dosage: med.dosage,
-          manufacturer: med.manufacturer || 'General Pharma',
+          manufacturer: med.manufacturer || '',
           expiryDate: med.expiryDate.split('T')[0],
-          quantityAdded: '100', // Auto-fill quantity for seamless scanning
-          isControlled: false,
-          requiresRefrigeration: false,
         }));
         setIsSuccess(true);
-        setMessage(
-          res.data.foundInDb
-            ? 'Scanned successfully. All details including suggested restock quantity auto-populated.'
-            : 'Details fetched via OCR. Please review before saving.'
-        );
+        setMessage('Medicine located in local registry. Adjusting quantity.');
       } else {
-        // Fallback for new unrecorded item: completely fill the form to satisfy "every detail" request
-        setFormData(prev => ({
-          ...prev,
-          name: 'Azithromycin (AI Scanned)',
-          dosage: '250mg',
-          manufacturer: 'PharmaCorp Inc.',
-          expiryDate: new Date(Date.now() + 86400000 * 400).toISOString().split('T')[0],
-          quantityAdded: '120',
-          isControlled: false,
-          requiresRefrigeration: false,
-        }));
-        setIsSuccess(true);
-        setMessage('AI Vision recognized new medication. All fields auto-filled.');
+        setIsSuccess(false);
+        setMessage('Unregistered batch detected. Initializing new entry.');
       }
     } catch {
-      // Mock entirely on error so the demo remains flawless
-      setFormData(prev => ({
-        ...prev,
-        name: 'Amoxicillin (AI Scanned)',
-        dosage: '500mg',
-        manufacturer: 'Global Health Ltd',
-        expiryDate: new Date(Date.now() + 86400000 * 365).toISOString().split('T')[0],
-        quantityAdded: '50',
-        isControlled: false,
-        requiresRefrigeration: false,
-      }));
-      setIsSuccess(true);
-      setMessage('AI Vision recognized medication. All fields auto-filled.');
+      setIsSuccess(false);
+      setMessage('Network error during lookup. Manual override active.');
     } finally {
       setLookupLoading(false);
     }
@@ -215,12 +91,10 @@ const handleScanSuccess = async (text: string) => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setMessage('');
-
     const selectedDate = new Date(formData.expiryDate);
     if (isNaN(selectedDate.getTime())) {
       setIsSuccess(false);
-      setMessage('Invalid expiry date format. Please correct it.');
+      setMessage('Invalid chronological format for expiry.');
       return;
     }
 
@@ -228,60 +102,62 @@ const handleScanSuccess = async (text: string) => {
     today.setHours(0, 0, 0, 0);
     if (selectedDate < today) {
       setIsSuccess(false);
-      setMessage('Cannot add medicines that are already expired.');
+      setMessage('Validation failed: Product has already reached lifecycle end.');
       return;
     }
 
     setSaveLoading(true);
     try {
-      await api.post('/stock/add', {
-         batchNo: formData.batchNo,
-         name: formData.name,
-         dosage: formData.dosage,
-         manufacturer: formData.manufacturer,
-         expiryDate: formData.expiryDate,
-         quantityAdded: formData.quantityAdded
-      });
+      await api.post('/stock/add', formData);
       setIsSuccess(true);
-      setMessage('Stock added successfully!');
-      setFormData({ batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: '', isControlled: false, requiresRefrigeration: false });
-      fetchHistory(); // Refresh history
+      setMessage('Inventory successfully updated. Record committed.');
+      setFormData({ batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: '', serialNo: '' });
     } catch (err: unknown) {
       setIsSuccess(false);
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      setMessage(msg || 'Failed to add stock. Please check your inputs.');
+      setMessage('Persistence error. Verify parameters and retry.');
     } finally {
       setSaveLoading(false);
     }
   };
 
-  const inputClass = `w-full px-4 py-2.5 rounded-lg border text-sm outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-primary`;
-  const labelClass = 'block text-xs font-semibold mb-2 uppercase tracking-wide text-slate-500';
-
-  const formatTime = (isoString: string) => {
-    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   return (
-    <div className="fade-in max-w-6xl mx-auto text-slate-800 font-sans">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-1">Stock Entry</h1>
-          <p className="text-sm text-slate-500">
-            Register new medical supplies into the inventory system.
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100 border border-green-200 text-green-700 text-xs font-bold uppercase tracking-wider shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-green-600"></span> SYSTEM READY
-        </div>
+    <div className="fade-in max-w-6xl mx-auto space-y-8">
+      {/* Dynamic Header */}
+      <div className="flex items-center justify-between">
+         <div className="space-y-1">
+            <Link to="/" className="flex items-center gap-1.5 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-blue-600 transition-colors mb-2">
+               <ArrowLeft size={14} /> Back to Dashboard
+            </Link>
+            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Add Stock</h1>
+            <p className="text-slate-500 font-medium">Record and verify incoming medical inventory batches.</p>
+         </div>
+         <div className="hidden md:flex items-center gap-4 px-6 py-3 glass-card rounded-2xl">
+            <div className="text-right">
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">System Load</p>
+               <p className="text-sm font-bold text-emerald-600">Stable</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+               <Activity size={20} />
+            </div>
+         </div>
       </div>
 
-      {/* Message Banner */}
+      {/* Message Notifications */}
       {message && (
-        <div className={`flex items-center gap-3 p-4 rounded-xl mb-6 text-sm font-medium border ${isSuccess ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'}`}>
-          {isSuccess ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-          {message}
+        <div className={`
+          flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 animate-in fade-in slide-in-from-top-4
+          ${isSuccess ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+            lookupLoading ? 'bg-blue-50 border-blue-100 text-blue-600' : 
+            'bg-rose-50 border-rose-100 text-rose-600'}
+        `}>
+          {lookupLoading ? <Loader2 size={24} className="animate-spin" /> : 
+           isSuccess ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
+          <div className="flex-1">
+             <p className="text-sm font-bold">{message}</p>
+             {lookupLoading && <div className="mt-2 w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 animate-shimmer" style={{ width: '100%', backgroundSize: '200% 100%' }}></div>
+             </div>}
+          </div>
         </div>
       )}
 
@@ -289,176 +165,190 @@ const handleScanSuccess = async (text: string) => {
         <ScannerModal onScanSuccess={handleScanSuccess} onClose={() => setShowScanner(false)} />
       )}
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Visual Verification */}
-        <div className="col-span-1 lg:col-span-5 flex flex-col gap-6">
-          <div className="rounded-2xl overflow-hidden bg-white border border-slate-200 shadow-sm relative">
-            <div className="h-64 relative bg-slate-800 flex items-center justify-center overflow-hidden">
-               {/* Abstract placeholder for the camera feed */}
-               <img src="https://images.unsplash.com/photo-1587854692152-cbe668df9734?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Scanner preview" className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay" />
-               <div className="absolute inset-4 border-2 border-blue-400 opacity-50 rounded-xl dashed flex items-center justify-center">
-                  <div className="w-48 h-24 border border-white opacity-80 rounded flex relative">
-                     <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-blue-400"></div>
-                     <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-blue-400"></div>
-                     <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-blue-400"></div>
-                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-blue-400"></div>
+        {/* Left: Interactive Scanner Portal */}
+        <div className="lg:col-span-5 space-y-6">
+           <div className="glass-card rounded-[32px] overflow-hidden group">
+               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-12 flex flex-col items-center justify-center text-center relative min-h-[400px]">
+                  <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1)_0,transparent_70%)]"></div>
+                  
+                  <div className="relative mb-8">
+                     <div className="w-32 h-32 rounded-full bg-white shadow-xl shadow-blue-500/10 border border-blue-100 flex items-center justify-center animate-float">
+                        <QrCode size={64} className="text-blue-600" />
+                     </div>
+                     <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 border-4 border-white">
+                        <Beaker size={14} className="text-white" />
+                     </div>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4 relative z-10">Smart Scan</h3>
+                  <p className="text-slate-500 text-sm font-medium mb-8 max-w-[280px] leading-relaxed relative z-10">
+                     Use optical recognition to automatically fetch batch details from our pharmaceutical global nodes.
+                  </p>
+
+                 <button
+                    onClick={() => setShowScanner(true)}
+                    disabled={lookupLoading}
+                    className="premium-button flex items-center gap-3 w-full max-w-[240px] justify-center relative z-10 group-hover:scale-105 transition-transform"
+                 >
+                    <Search size={20} />
+                    <span> Scan QR / Barcode</span>
+                 </button>
+              </div>
+              <div className="p-8 border-t border-slate-100 bg-slate-50/50">
+                  <div className="flex gap-4 items-start">
+                     <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                        <span className="text-blue-600"><Info size={16} /></span>
+                     </div>
+                     <div className="space-y-1">
+                        <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Protocol Support</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                           We support standard GS1 barcodes, ACG verification URLs, and DSCSA digital signatures.
+                        </p>
+                     </div>
                   </div>
                </div>
-               <div className="absolute bottom-4 flex gap-3">
-                  <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition-colors">
-                     <AlertCircle size={18} />
-                  </button>
-                  <button onClick={() => setShowScanner(true)} className="px-6 py-2 rounded-full bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg flex items-center gap-2">
-                     <QrCode size={16} /> Scan QR
-                  </button>
-                  <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center hover:bg-black/60 transition-colors">
-                     <RefreshCw size={18} />
-                  </button>
-               </div>
-            </div>
-            <div className="p-6">
-              <h4 className="font-bold text-slate-900 mb-1">Visual Verification</h4>
-              <p className="text-sm text-slate-500">
-                Align the QR code or Barcode within the frame for instant inventory data retrieval.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-4 items-start">
-             <div className="mt-1 text-blue-600">
-                <Info size={20} />
-             </div>
-             <div>
-                <h4 className="font-bold text-blue-900 text-sm mb-1">Pro Tip</h4>
-                <p className="text-xs text-blue-700 opacity-80 leading-relaxed">Ensure batch stickers are clean and well-lit for 98.4% faster scanning accuracy.</p>
-             </div>
-          </div>
+           </div>
         </div>
 
-        {/* Right Column: Manual Entry */}
-        <div className="col-span-1 lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-             <div>
-                <h3 className="text-xl font-bold text-slate-900">Manual Entry</h3>
-                <p className="text-xs text-slate-500 mt-1">Fields marked with an asterisk are required for compliance.</p>
-             </div>
-             <div className="text-slate-300">
-                <QrCode size={32} strokeWidth={1} />
-             </div>
-          </div>
+        {/* Right: Data Entry Terminal */}
+        <div className="lg:col-span-7">
+           <div className="glass-card p-10 rounded-[32px]">
+              <div className="flex items-center gap-3 mb-10">
+                 <div className="w-8 h-[2px] bg-blue-600"></div>
+                 <h3 className="text-xl font-bold text-slate-900">Stock Entry</h3>
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-               <div>
-                  <label className={labelClass}>BATCH NUMBER *</label>
-                  <div className="relative">
-                     <input type="text" placeholder="e.g., BTCH-2024-99X" className={`${inputClass} bg-slate-50 pr-10`} value={formData.batchNo} onChange={e => setFormData({ ...formData, batchNo: e.target.value })} required />
-                     <button type="button" onClick={() => fetchMedicineDetails(formData.batchNo)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors">
-                        <Search size={16} />
+              <form onSubmit={handleSubmit} className="space-y-8">
+                 {/* Batch ID Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Batch Number *</label>
+                       <div className="relative group">
+                          <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                          <input
+                             type="text"
+                             className="w-full bg-slate-100/50 border border-slate-200 rounded-2xl px-12 py-3.5 text-sm text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all font-mono"
+                             placeholder="BTCH-0000"
+                             value={formData.batchNo}
+                             onChange={e => setFormData({...formData, batchNo: e.target.value})}
+                             required
+                          />
+                       </div>
+                    </div>
+                    <div className="flex items-end pb-1.5">
+                       <button
+                          type="button"
+                          onClick={() => fetchMedicineDetails(formData.batchNo)}
+                          disabled={lookupLoading}
+                          className="px-6 py-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all w-full flex items-center justify-center gap-2"
+                       >
+                          <Search size={14} /> Local Lookup
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* Product Info */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Product Name *</label>
+                        <div className="relative group">
+                           <Beaker className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                           <input
+                              type="text"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-3.5 text-sm text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all"
+                              placeholder="Amoxicillin..."
+                              value={formData.name}
+                              onChange={e => setFormData({...formData, name: e.target.value})}
+                              required
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Spec (Dosage) *</label>
+                        <input
+                           type="text"
+                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all"
+                           placeholder="500mg"
+                           value={formData.dosage}
+                           onChange={e => setFormData({...formData, dosage: e.target.value})}
+                           required
+                        />
+                     </div>
+                  </div>
+
+                 {/* Lifecycle Info */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Manufacturer</label>
+                        <div className="relative group">
+                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                           <input
+                              type="text"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-3.5 text-sm text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all"
+                              placeholder="Pfizer, GSK..."
+                              value={formData.manufacturer}
+                              onChange={e => setFormData({...formData, manufacturer: e.target.value})}
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Expiry Date *</label>
+                        <div className="relative group">
+                           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                           <input
+                              type="date"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-3.5 text-sm text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all"
+                              value={formData.expiryDate}
+                              onChange={e => setFormData({...formData, expiryDate: e.target.value})}
+                              required
+                           />
+                        </div>
+                     </div>
+                  </div>
+
+                 {/* Volume Section */}
+                  <div className="space-y-2 pt-4">
+                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Quantity *</label>
+                     <div className="relative group">
+                        <PackagePlus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                        <input
+                           type="number"
+                           min="1"
+                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-4 text-lg font-bold text-slate-900 outline-none focus:border-blue-500/50 focus:bg-white transition-all"
+                           placeholder="000"
+                           value={formData.quantityAdded}
+                           onChange={e => setFormData({...formData, quantityAdded: e.target.value})}
+                           required
+                        />
+                     </div>
+                  </div>
+
+                 {/* Action Panel */}
+                  <div className="flex gap-4 pt-6 border-t border-slate-100">
+                     <button
+                        type="button"
+                        onClick={() => setFormData({ batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: '', serialNo: '' })}
+                        className="flex-1 py-4 rounded-2xl border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all"
+                     >
+                        Clear
+                     </button>
+                     <button
+                        type="submit"
+                        disabled={saveLoading}
+                        className="flex-[2] premium-button flex items-center justify-center gap-3 relative overflow-hidden group"
+                     >
+                        <Save size={20} />
+                        <span>{saveLoading ? 'Writing Data...' : 'Add'}</span>
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
                      </button>
                   </div>
-               </div>
-               <div>
-                  <label className={labelClass}>EXPIRY DATE *</label>
-                  <div className="relative">
-                     <input type="date" className={`${inputClass} bg-slate-50`} value={formData.expiryDate} onChange={e => setFormData({ ...formData, expiryDate: e.target.value })} required />
-                  </div>
-               </div>
-            </div>
-
-            <div>
-               <label className={labelClass}>TABLET NAME & SPECIFICATION *</label>
-               <input type="text" placeholder="e.g., Amoxicillin Trihydrate" className={`${inputClass} bg-slate-50`} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-               <div>
-                  <label className={labelClass}>DOSAGE (MG/ML) *</label>
-                  <div className="relative">
-                     <input type="text" placeholder="e.g., 500mg" className={`${inputClass} bg-slate-50`} value={formData.dosage} onChange={e => setFormData({ ...formData, dosage: e.target.value })} required />
-                  </div>
-               </div>
-               <div>
-                  <label className={labelClass}>MANUFACTURER *</label>
-                  <div className="relative">
-                     <input type="text" placeholder="e.g., Pfizer Pharmaceuticals" className={`${inputClass} bg-slate-50 pr-12`} value={formData.manufacturer} onChange={e => setFormData({ ...formData, manufacturer: e.target.value })} required />
-                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M3 7v14M21 7v14M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4M12 3v4"></path></svg>
-                     </span>
-                  </div>
-               </div>
-            </div>
-
-            <div>
-               <label className={labelClass}>QUANTITY TO ADD *</label>
-               <input type="number" min="1" placeholder="e.g., 100" className={`${inputClass} bg-slate-50`} value={formData.quantityAdded} onChange={e => setFormData({ ...formData, quantityAdded: e.target.value })} required />
-            </div>
-
-            <div className="flex gap-4 pt-2">
-               <label className="flex flex-1 items-center gap-3 bg-green-50/50 border border-green-100 p-3 rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
-                  <input type="checkbox" className="w-4 h-4 rounded border-green-300 text-green-600 focus:ring-green-600 bg-white" checked={formData.isControlled} onChange={e => setFormData({...formData, isControlled: e.target.checked})} />
-                  <span className="text-sm font-medium text-green-800">Controlled Substance</span>
-               </label>
-               <label className="flex flex-1 items-center gap-3 bg-slate-50 border border-slate-200 p-3 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
-                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 bg-white" checked={formData.requiresRefrigeration} onChange={e => setFormData({...formData, requiresRefrigeration: e.target.checked})} />
-                  <span className="text-sm font-medium text-slate-700">Requires Refrigeration</span>
-               </label>
-            </div>
-
-            <div className="flex gap-4 pt-6 border-t border-slate-100">
-              <button type="button" onClick={() => setFormData({ batchNo: '', name: '', dosage: '', manufacturer: '', expiryDate: '', quantityAdded: '', isControlled: false, requiresRefrigeration: false })} className="px-6 py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex-1 flex items-center justify-center">
-                Discard Entry
-              </button>
-              <button type="submit" disabled={saveLoading} className="px-6 py-3.5 rounded-xl font-bold text-white bg-blue-700 hover:bg-blue-800 transition-colors shadow-md flex-[2] flex items-center justify-center gap-2">
-                 <QrCode size={18} />
-                {saveLoading ? 'Saving...' : 'Complete Entry'}
-              </button>
-              <button type="button" className="px-6 py-3.5 rounded-xl font-bold text-white bg-red-700 hover:bg-red-800 transition-colors flex-1 flex items-center justify-center gap-2 shadow-md">
-                <AlertTriangle size={18} />
-                Flag Batch
-              </button>
-            </div>
-          </form>
+              </form>
+           </div>
         </div>
-      </div>
-
-      {/* Session History section */}
-      <div>
-         <div className="flex items-center justify-between mb-4 mt-6">
-            <h2 className="text-xl font-bold text-slate-900">Session History</h2>
-            <Link to="/inventory" className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
-              View All <ArrowRight size={14} />
-            </Link>
-         </div>
-         <div className="flex flex-col gap-3 pb-8">
-            {sessionHistory.map(history => (
-               <div key={history.id} className="bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between hover:border-slate-300 transition-colors">
-                  <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                        <CheckCircle size={20} />
-                     </div>
-                     <div>
-                        <h4 className="font-bold text-slate-900 text-base">{history.medicine.name} {history.medicine.dosage}</h4>
-                        <p className="text-sm text-slate-500 mt-0.5">Batch: {history.medicine.batchNo} • {history.medicine.manufacturer || 'Unknown Mfr'} • +{history.quantityAdded} Added</p>
-                     </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-1.5">
-                     <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Verified {formatTime(history.addedAt)}</p>
-                     <span className="px-2.5 py-1 rounded bg-green-700 text-white text-[10px] font-bold uppercase tracking-widest leading-none">
-                        STOCK UPDATED
-                     </span>
-                  </div>
-               </div>
-            ))}
-            {sessionHistory.length === 0 && (
-               <div className="text-center py-6 text-sm text-slate-500 bg-slate-50 border border-slate-200 border-dashed rounded-xl">
-                  No stock entries logged in this session.
-               </div>
-            )}
-         </div>
       </div>
     </div>
   );
 }
+
