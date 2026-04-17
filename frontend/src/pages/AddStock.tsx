@@ -50,64 +50,33 @@ export default function AddStock() {
     fetchHistory();
   }, []);
 
-  const handleScanSuccess = (text: string) => {
-  setShowScanner(false);
-  setMessage('');
-
-  try {
-    // Try JSON QR Code
-    const scannedData = JSON.parse(text);
-
-    if (typeof scannedData === 'object' && scannedData !== null) {
-      setFormData(prev => ({
-        ...prev,
-        batchNo: scannedData.batchNo || scannedData.batch || '',
-        name: scannedData.name || '',
-        dosage: scannedData.dosage || '',
-        manufacturer: scannedData.manufacturer || '',
-        expiryDate: scannedData.expiryDate || '',
-        quantityAdded: scannedData.quantity || '100',
-        isControlled: false,
-        requiresRefrigeration: false
-      }));
-
-      setIsSuccess(true);
-      setMessage('QR details extracted successfully.');
-      return;
-    }
-  } catch {
-    // not JSON, continue
-  }
-
-  // If comma separated text
-  if (text.includes(',')) {
-    const parts = text.split(',');
-
-    setFormData(prev => ({
-      ...prev,
-      batchNo: parts[0]?.trim() || '',
-      name: parts[1]?.trim() || '',
-      dosage: parts[2]?.trim() || '',
-      manufacturer: parts[3]?.trim() || '',
-      expiryDate: parts[4]?.trim() || '',
-      quantityAdded: parts[5]?.trim() || '100',
-      isControlled: false,
-      requiresRefrigeration: false
-    }));
-
-    setIsSuccess(true);
-    setMessage('Barcode details extracted.');
-    return;
-  }
-
-  // If plain barcode / batch no
-  setFormData(prev => ({
-    ...prev,
-    batchNo: text
-  }));
-
-  fetchMedicineDetails(text);
-};
+  const handleScanSuccess = async (code:string) => {
+     setShowScanner(false);
+    
+     try{
+       const res = await api.get(`/medicines/scan/${code}`);
+       const med = res.data;
+    
+       setFormData({
+         batchNo: med.batchNo || code,
+         name: med.name || '',
+         dosage: med.dosage || '',
+         manufacturer: med.manufacturer || '',
+         expiryDate: med.expiryDate || '',
+         quantityAdded: '100',
+         isControlled:false,
+         requiresRefrigeration:false
+       });
+    
+       setMessage("Medicine details loaded");
+       setIsSuccess(true);
+    
+     }catch{
+       setFormData(prev => ({...prev,batchNo:code}));
+       setMessage("Barcode scanned. Enter remaining details.");
+       setIsSuccess(false);
+     }
+    };
 
   const fetchMedicineDetails = async (batchNo: string) => {
     if (!batchNo) return;
