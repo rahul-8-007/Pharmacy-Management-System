@@ -52,97 +52,62 @@ export default function AddStock() {
 
   const handleScanSuccess = (text: string) => {
   setShowScanner(false);
+  setMessage('');
 
-  if (text.includes(",")) {
-    const parts = text.split(",");
+  try {
+    // Try JSON QR Code
+    const scannedData = JSON.parse(text);
+
+    if (typeof scannedData === 'object' && scannedData !== null) {
+      setFormData(prev => ({
+        ...prev,
+        batchNo: scannedData.batchNo || scannedData.batch || '',
+        name: scannedData.name || '',
+        dosage: scannedData.dosage || '',
+        manufacturer: scannedData.manufacturer || '',
+        expiryDate: scannedData.expiryDate || '',
+        quantityAdded: scannedData.quantity || '100',
+        isControlled: false,
+        requiresRefrigeration: false
+      }));
+
+      setIsSuccess(true);
+      setMessage('QR details extracted successfully.');
+      return;
+    }
+  } catch {
+    // not JSON, continue
+  }
+
+  // If comma separated text
+  if (text.includes(',')) {
+    const parts = text.split(',');
 
     setFormData(prev => ({
       ...prev,
-      batchNo: parts[0] || "",
-      name: parts[1] || "",
-      dosage: parts[2] || "",
-      manufacturer: parts[3] || "",
-      expiryDate: parts[4] || "",
-      quantityAdded: parts[5] || "100"
+      batchNo: parts[0]?.trim() || '',
+      name: parts[1]?.trim() || '',
+      dosage: parts[2]?.trim() || '',
+      manufacturer: parts[3]?.trim() || '',
+      expiryDate: parts[4]?.trim() || '',
+      quantityAdded: parts[5]?.trim() || '100',
+      isControlled: false,
+      requiresRefrigeration: false
     }));
 
-    setMessage("Scanned successfully");
     setIsSuccess(true);
+    setMessage('Barcode details extracted.');
     return;
   }
 
-  setFormData(prev => ({ ...prev, batchNo: text }));
+  // If plain barcode / batch no
+  setFormData(prev => ({
+    ...prev,
+    batchNo: text
+  }));
+
   fetchMedicineDetails(text);
 };
-      
-      const extractedBatch = extractField(/(?:batch|lot|id)(?:\s*no\.?)?\s*[:\-]?\s+([a-zA-Z0-9\-_]+)/i);
-      const extractedName = extractField(/(?:name|medicine|drug|product)\s*[:\-]?\s+([a-zA-Z0-9\s\.\-]+?)(?=\s*(?:dosage|strength|dose|batch|lot|mfg|manufacturer|exp|expiry|qty|quantity|$|\n|,))/i);
-      const extractedDosage = extractField(/(?:dosage|strength|dose)\s*[:\-]?\s+([0-9]+(?:\.[0-9]+)?\s*[a-zA-Z\/%]+)/i);
-      const extractedMfg = extractField(/(?:mfg|manufacturer|maker)\s*[:\-]?\s+([a-zA-Z0-9\s\.\-]+?)(?=\s*(?:dosage|strength|dose|batch|lot|name|medicine|exp|expiry|qty|quantity|$|\n|,))/i);
-      const extractedExp = extractField(/(?:exp|expiry|valid)\s*[:\-]?\s+([0-9\-\/\.]+)/i);
-      const extractedQty = extractField(/(?:qty|quantity|count)\s*[:\-]?\s+([0-9]+)/i);
-
-      if (extractedBatch || extractedName || extractedDosage || extractedMfg || extractedExp || extractedQty) {
-         setFormData(prev => ({
-           ...prev,
-           batchNo: extractedBatch || prev.batchNo,
-           name: extractedName || prev.name,
-           dosage: extractedDosage || prev.dosage,
-           manufacturer: extractedMfg || prev.manufacturer,
-           expiryDate: extractedExp || prev.expiryDate,
-           quantityAdded: extractedQty || '100',
-           isControlled: false,
-           requiresRefrigeration: false,
-         }));
-         setIsSuccess(true);
-         setMessage('Extracted medicine details directly from scanned text.');
-      } 
-      // check if it's a newline-separated format
-      else if (text.includes('\n')) {
-         const parts = text.split(/\r?\n/).map(p => p.trim()).filter(p => p);
-         if (parts.length >= 2) {
-             setFormData(prev => ({
-               ...prev,
-               batchNo: parts[0] || '',
-               name: parts[1] || '',
-               dosage: parts[2] || '',
-               manufacturer: parts[3] || '',
-               expiryDate: parts[4] || '',
-               quantityAdded: parts[5] || '100',
-               isControlled: false,
-               requiresRefrigeration: false,
-             }));
-             setIsSuccess(true);
-             setMessage('Extracted text details from newline-separated barcode.');
-         } else {
-             setFormData(prev => ({ ...prev, batchNo: text }));
-             fetchMedicineDetails(text);
-         }
-      } 
-      // check if it's a comma-separated format
-      else if (text.includes(',')) {
-         const parts = text.split(',');
-         setFormData(prev => ({
-           ...prev,
-           batchNo: parts[0]?.trim() || '',
-           name: parts[1]?.trim() || '',
-           dosage: parts[2]?.trim() || '',
-           manufacturer: parts[3]?.trim() || '',
-           expiryDate: parts[4]?.trim() || '',
-           quantityAdded: parts[5]?.trim() || '100',
-           isControlled: false,
-           requiresRefrigeration: false,
-         }));
-         setIsSuccess(true);
-         setMessage('Extracted all text details from the barcode.');
-      } 
-      else {
-         // Fallback: If it's just a raw plain-text ID/Barcode, use our AI/DB lookup fallback
-         setFormData(prev => ({ ...prev, batchNo: text }));
-         fetchMedicineDetails(text);
-      }
-    }
-  };
 
   const fetchMedicineDetails = async (batchNo: string) => {
     if (!batchNo) return;
