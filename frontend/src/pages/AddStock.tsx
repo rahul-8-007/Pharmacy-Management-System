@@ -49,81 +49,112 @@ export default function AddStock() {
   useEffect(() => {
     fetchHistory();
   }, []);
+const handleScanSuccess = async (text: string) => {
+  setShowScanner(false);
+  setMessage('');
 
-  const handleScanSuccess = async (text: string) => {
-      setShowScanner(false);
-      setMessage('');
-    
-      // ✅ 1. Try JSON QR
-      try {
-        const data = JSON.parse(text);
-    
-        setFormData({
-          batchNo: data.batchNo || data.batch || '',
-          name: data.name || '',
-          dosage: data.dosage || '',
-          manufacturer: data.manufacturer || '',
-          expiryDate: data.expiryDate || '',
-          quantityAdded: data.quantity || '100',
-          isControlled: false,
-          requiresRefrigeration: false
-        });
-    
-        setIsSuccess(true);
-        setMessage("QR code scanned successfully");
-        return;
-      } catch {
-        // not JSON → continue
-      }
-    
-      // ✅ 2. Try comma separated QR
-      if (text.includes(',')) {
-        const parts = text.split(',');
-    
-        setFormData({
-          batchNo: parts[0]?.trim() || '',
-          name: parts[1]?.trim() || '',
-          dosage: parts[2]?.trim() || '',
-          manufacturer: parts[3]?.trim() || '',
-          expiryDate: parts[4]?.trim() || '',
-          quantityAdded: parts[5]?.trim() || '100',
-          isControlled: false,
-          requiresRefrigeration: false
-        });
-    
-        setIsSuccess(true);
-        setMessage("Barcode details extracted");
-        return;
-      }
-    
-      // ✅ 3. Barcode → Backend lookup
-      try {
-        const res = await api.get(`/medicines/scan/${text}`);
-        const med = res.data;
-    
-        setFormData({
-          batchNo: med.batchNo || text,
-          name: med.name || '',
-          dosage: med.dosage || '',
-          manufacturer: med.manufacturer || '',
-          expiryDate: med.expiryDate ? med.expiryDate.split('T')[0] : '',
-          quantityAdded: '100',
-          isControlled: false,
-          requiresRefrigeration: false
-        });
-    
-        setIsSuccess(true);
-        setMessage("Medicine details fetched successfully");
-      } catch {
-        setFormData(prev => ({
-          ...prev,
-          batchNo: text
-        }));
-    
-        setIsSuccess(false);
-        setMessage("Only barcode detected. Please fill remaining details.");
-      }
-    };
+  // QR contains website link
+  if (text.startsWith('http')) {
+    try {
+      const res = await api.get(
+        `/medicines/url?link=${encodeURIComponent(text)}`
+      );
+
+      const med = res.data;
+
+      setFormData({
+        batchNo: med.batchNo || '',
+        name: med.name || '',
+        dosage: med.dosage || '',
+        manufacturer: med.manufacturer || '',
+        expiryDate: med.expiryDate || '',
+        quantityAdded: '100',
+        isControlled: false,
+        requiresRefrigeration: false
+      });
+
+      setIsSuccess(true);
+      setMessage('QR details fetched from link');
+      return;
+    } catch {
+      setIsSuccess(false);
+      setMessage('QR contains only a link');
+      return;
+    }
+  }
+
+  // 1. Try JSON QR
+  try {
+    const data = JSON.parse(text);
+
+    setFormData({
+      batchNo: data.batchNo || data.batch || '',
+      name: data.name || '',
+      dosage: data.dosage || '',
+      manufacturer: data.manufacturer || '',
+      expiryDate: data.expiryDate || '',
+      quantityAdded: data.quantity || '100',
+      isControlled: false,
+      requiresRefrigeration: false
+    });
+
+    setIsSuccess(true);
+    setMessage('QR code scanned successfully');
+    return;
+  } catch {
+    // continue
+  }
+
+  // 2. Comma separated data
+  if (text.includes(',')) {
+    const parts = text.split(',');
+
+    setFormData({
+      batchNo: parts[0]?.trim() || '',
+      name: parts[1]?.trim() || '',
+      dosage: parts[2]?.trim() || '',
+      manufacturer: parts[3]?.trim() || '',
+      expiryDate: parts[4]?.trim() || '',
+      quantityAdded: parts[5]?.trim() || '100',
+      isControlled: false,
+      requiresRefrigeration: false
+    });
+
+    setIsSuccess(true);
+    setMessage('Barcode details extracted');
+    return;
+  }
+
+  // 3. Barcode / Batch lookup
+  try {
+    const res = await api.get(`/medicines/scan/${text}`);
+    const med = res.data;
+
+    setFormData({
+      batchNo: med.batchNo || text,
+      name: med.name || '',
+      dosage: med.dosage || '',
+      manufacturer: med.manufacturer || '',
+      expiryDate: med.expiryDate
+        ? med.expiryDate.split('T')[0]
+        : '',
+      quantityAdded: '100',
+      isControlled: false,
+      requiresRefrigeration: false
+    });
+
+    setIsSuccess(true);
+    setMessage('Medicine details fetched successfully');
+  } catch {
+    setFormData(prev => ({
+      ...prev,
+      batchNo: text
+    }));
+
+    setIsSuccess(false);
+    setMessage('Only barcode detected. Fill remaining details.');
+  }
+};
   const fetchMedicineDetails = async (batchNo: string) => {
     if (!batchNo) return;
     setLookupLoading(true);
