@@ -117,11 +117,6 @@ export default function AddStock() {
             return;
          }
       
-         // FINAL fallback
-         setFormData(prev => ({ ...prev, batchNo: text }));
-         fetchMedicineDetails(text);
-      }
-      
       const extractedBatch = extractField(/(?:batch|lot|id)(?:\s*no\.?)?\s*[:\-]?\s+([a-zA-Z0-9\-_]+)/i);
       const extractedName = extractField(/(?:name|medicine|drug|product)\s*[:\-]?\s+([a-zA-Z0-9\s\.\-]+?)(?=\s*(?:dosage|strength|dose|batch|lot|mfg|manufacturer|exp|expiry|qty|quantity|$|\n|,))/i);
       const extractedDosage = extractField(/(?:dosage|strength|dose)\s*[:\-]?\s+([0-9]+(?:\.[0-9]+)?\s*[a-zA-Z\/%]+)/i);
