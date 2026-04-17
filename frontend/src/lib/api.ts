@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://pharmacy-management-system-pa3l.onrender.com/api'
+  baseURL: 'https://pharmacy-management-system-pa3l.onrender.com/api',
+  withCredentials: true
 });
 
 api.interceptors.request.use((config) => {
