@@ -11,10 +11,7 @@ router.get('/scan/:code', async (req, res) => {
   try {
     const medicine = await prisma.medicine.findFirst({
       where: {
-        OR: [
-          { barcode: code },
-          { batchNo: code }
-        ]
+        batchNo: code
       }
     });
 
@@ -22,7 +19,6 @@ router.get('/scan/:code', async (req, res) => {
       return res.json(medicine);
     }
 
-    // fallback
     return res.json({
       batchNo: code,
       name: "",
