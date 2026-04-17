@@ -498,3 +498,4 @@ export default function AddStock() {
     </div>
   );
 };
+export default AddStock;
